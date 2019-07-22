@@ -7,5 +7,5 @@
 周四|写myshell|写myshell|复习《啊哈算法》，洛谷完成新手村
 周五|完善myshell|完善myshell|复习《啊哈算法》，洛谷完成新手村
 周六|完善myshell|完善myshell|休息
-另：闲暇翻看一下《vim实用技巧》，更好掌握vim 
 
+另：闲暇翻看一下《vim实用技巧》，更好掌握vim 
