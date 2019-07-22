@@ -31,7 +31,7 @@ int g_maxlen;
 void my_err(const char *err_string,int line){
     fprintf(stderr,"line:%d",line);
     perror(err_string);
-    exit(1);
+    //exit(1);
 }
 
 //按照不同颜色打印
@@ -123,7 +123,7 @@ void display_arttribute(struct stat buf,char *name){
         if(buf.st_mode & S_IXOTH){
             printf("x");
         }else{
-            printf("-");
+           printf("-");
         }
     
     printf("\t");
