@@ -16,13 +16,12 @@
 #define PARAM_A    1
 #define PARAM_L    2
 #define PARAM_R    4
-#define PARAM_r    8
-#define MAXROWLEN  80
+#define MAXROWLEN  150
 
 int g_leave_len = MAXROWLEN;                                                                                   
 int g_maxlen;  //存放某目录下最长文件名的长度
 int clour;  //底色
-long int sum; 
+unsigned long long sum; 
 void my_err(char error[],int num){
 
     fprintf(stderr,"line :%d",num);
@@ -143,6 +142,9 @@ void display_attribute(struct stat buf,char * name)
     printf("%4ld ",buf.st_nlink);//打印文件连接数
     printf("%-8s ",psd->pw_name);
     printf("%-8s",grp->gr_name);
+    
+    /* puts(); */
+    /* puts(); */
 
     printf("%6ld",buf.st_size);//打印文件大小
     sum = sum + buf.st_size;
@@ -316,7 +318,7 @@ void display_dir(int flag_param,char * path)
 
     for(i = 0;i < count-1;i++){
         for(j = 0;j < count-1-i;j++){
-            if(strcmp(filename[j],filename[j+1]) > 0){
+   if(strcmp(filename[j],filename[j+1]) > 0){
                 strcpy(temp,filename[j+1]);
                 temp[strlen(filename[j+1])] = '\0';
                 strcpy(filename[j+1],filename[j]);
@@ -331,8 +333,9 @@ void display_dir(int flag_param,char * path)
         getclour(filename[i]);
         display(flag_param,filename[i]);
     }
-    if(flag_param & PARAM_L)
-        printf("总用量：%ld\n",sum);
+    if(flag_param & PARAM_L){
+        printf("总用量：%lld\n",sum);
+    }
 
     if(flag_param & PARAM_R){  
 
@@ -395,8 +398,9 @@ void display_dir(int flag_param,char * path)
 }
 
 int main(int argc,char **argv){
+                /* printf("path:\n"); */
     int i=0,j=0,k=0,num=0;                                                                                     
-    char path[_PC_PATH_MAX+1];
+    char path[1000+1];
     char param[40];//保存命令行参数
     int flag_param=0;//参数种类l、a，r
     struct stat buf;
@@ -411,7 +415,7 @@ int main(int argc,char **argv){
     }
 
     //只支持少量参数，其他参数无法使用，报错
-    for(int i = 0;i < j;i++){
+    for(i = 0;i < j;i++){
         if(param[i]=='a')
         {
             flag_param|=PARAM_A;
@@ -422,9 +426,6 @@ int main(int argc,char **argv){
         }
         else if(param[i]=='R'){
             flag_param|=PARAM_R;
-        }
-        else if(param[i]=='r'){
-            flag_param|=PARAM_r;
         }
         else
         {
@@ -446,28 +447,42 @@ int main(int argc,char **argv){
 
     while(i<argc){
 
+        /* printf("%d\n",i); */
         if(argv[i][0]=='-')
         {
             i++;
             continue;
         }
         else{
-
+        /* printf("i =============== %d\n",i); */
+            int ii = i;
+        /* printf("ii============%d\n",ii); */
             strcpy(path,argv[i]);
+        /* printf("ii = %d\n",ii); */
             if(stat(path,&buf)==-1)
             {
                 my_err("stat",__LINE__);
             }
             if(S_ISDIR(buf.st_mode))
             {
-                if(path[strlen(argv[i])-1]!='/')
+        /* printf("i = %d\n",i); */
+                /* printf("path:%s\n",path); */
+
+                /* printf("ii = %d",ii); */
+                /* printf("adsa:i%d\n",i); */
+
+                /* printf("strlen():%ld\n",strlen(argv[ii])); */
+                char a = path[strlen(argv[ii])-1];
+                /* printf("%c\n",a); */
+                if(path[strlen(argv[ii])-1]!='/')
                 {
-                    path[strlen(argv[i])]='/';
-                    path[strlen(argv[i])+1]='\0';//保证字符串末尾为空零 方便进行字符串操作
+                    path[strlen(argv[ii])]='/';
+                    path[strlen(argv[ii])+1]='\0';//保证字符串末尾为空零 方便进行字符串操作
                 }
                 else{
-                    path[strlen(argv[i])]='\0';
+                    path[strlen(argv[ii])]='\0';
                 }
+                /* printf("path:%s\n",path); */
                 display_dir(flag_param,path);
 
             }
