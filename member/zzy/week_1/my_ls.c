@@ -27,6 +27,8 @@
 int g_leave_len = MAXROWLEN; //无参数
 int g_maxlen;
 
+void display(int flag,char *pathname);
+
 //报错函数
 void my_err(const char *err_string,int line){
     fprintf(stderr,"line:%d",line);
@@ -169,15 +171,21 @@ void display_single(struct stat buf, char *name){
 void display_dir2(DIR* ret_opendir)
 {
     int i = 0;
+    //printf("\n1\n");
     struct dirent* ret_readdir = NULL; // 定义readdir函数返回的结构体变量
     while((ret_readdir = readdir(ret_opendir))) // 判断是否读取到目录尾
     {
-        char* filename = ret_readdir->d_name; // 获取文件名
+        //printf("222");
+        char* filename = ret_readdir->d_name; // 获取文件名  
+        struct stat buf;
+        lstat(filename,&buf);
+        //display_single(buf,filename);
         if(i == 5){
-            printf("\n");
+            //printf("\n");
         }
         if(filename[0]!='.'){ // 不输出当前目录、上一级目录与隐藏文件 
-            printf("%s\t",ret_readdir->d_name); // 打印文件名
+            //printf("%s\t",ret_readdir->d_name); // 打印文件名
+            display_single(buf,filename);
             i++;
         }
     }
@@ -208,7 +216,6 @@ void list_dir(const char* pathname)
     
     printf("%s:\n",pathname); // 显示pathname目录路径
     display_dir2(ret_opendir); // 显示pathname目录下所有非隐藏文件名称
-    
     //printf("\nsssssssss%d\n",a++);
     
     struct dirent* ret_readdir = NULL; // 定义readdir函数返回的结构体变量
@@ -234,6 +241,7 @@ void list_dir(const char* pathname)
         else if(S_ISDIR(file_message.st_mode)  && filename[0]!='.') // 筛选"."、".."与隐藏>
         {
             //printf("\n--%s--\n",filename);
+            //printf("\n%s\n",nextpath);
             list_dir(nextpath);
         }
     }
@@ -308,6 +316,8 @@ void display(int flag,char *pathname){
             //if(S_ISDIR(buf.st_mode)  && name[0]!='.')
             //printf("\n--%s--\n",name);
             break;
+        case PARAM_L + PARAM_R:
+            
         default:
             break;
     }
