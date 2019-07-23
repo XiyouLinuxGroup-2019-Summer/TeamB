@@ -317,14 +317,34 @@ void display(int flag,char *pathname){
             //printf("\n--%s--\n",name);
             break;
         case PARAM_L + PARAM_R:
+             if(name[0] != '.')
+				       {
+					       display_arttribute(buf,name);
+					       /*if(flag_color == 1)
+					       {
+					     	  printf("\033[34m %s\033[0m\n", name);
+					       }
+					       else */   printf( " %-s\n",name);
+				      
+					       /*if(lflag == 1)
+						{
+				      			 printf(" -> ");
+							 printf( "%s",pathname);
+						}
+
+					       printf( "\n");
+				       }*/
+    }
+					break;
+            //display_arttribute(buf,name);
             
         default:
             break;
-    }
-}
+    
+}}
 
 void display_dir(int flag_param,char *path){    //显示目录
-    DIR *dir;
+    /*DIR *dir;
     struct dirent *ptr;
     //struct stat buf;
     int count = 0;
@@ -384,8 +404,152 @@ void display_dir(int flag_param,char *path){    //显示目录
     //如果命令行中没有一个-1选项，则打印一个换行符
     if((flag_param & PARAM_L) == 0){
         printf("\n");
-    }
+    }*/
+    char temp[PATH_MAX];
+	strcpy(temp,path);
+	DIR *dir;       //目录流
+	struct dirent   *ptr;   //目录信息结构体
+	int count  = 0;    //该目录下的文件总数
+
+
+	char name[256];
+	struct stat buf;    //存储文件信息的结构体
+	char new_path [256];
+	//获取该目录下文件总数和最长的文件名
+	dir = opendir(path);
+	printf( "\npath %s\n",path);
+	if(dir == NULL)  my_err("opendir",__LINE__);
+	else {
+	while((ptr = readdir(dir)) != NULL)
+	{
+		if(g_maxlen < strlen(ptr->d_name))   //获取最长文件名
+		{
+			g_maxlen = strlen(ptr->d_name);
+		}
+
+		 count++;    //获取总数
+	}}
+	closedir(dir);
+	char **filenames = (char **)malloc(sizeof(char *) * count);
+	for(int i = 0;i < count;i++)
+	{
+		filenames[i] = (char *)malloc(sizeof(char) * PATH_MAX + 1);
+	}
+
+
+	int i,j,len = strlen(path);
+	//获取 该 目录下的所有文件名
+
+	dir = opendir(path);   //获取目录流
+	for(i = 0;i < count;i++)
+	{
+		ptr = readdir(dir);
+
+		if(ptr == NULL)   my_err("dir_ptr",__LINE__);
+		strcpy(filenames[i],path);
+                filenames[i][len] = '\0';
+                strcpy(filenames[i],ptr->d_name);
+                filenames[i][len+strlen(ptr->d_name)] = '\0';
+	}
+
+	//将文件 名 和 路径进行拼接
+	for(int i = 0;i < count;i++)
+	{
+		int len = strlen(path);
+		temp[len+1] = '\0';
+		strcat(temp,filenames[i]);
+		strcpy(filenames[i],temp);
+		strcpy(temp,path);
+
+	}
+
+
+	//使用冒泡法进行排序,排序后文件名按 字母顺序存储于 filenames
+
+	for(i = 0;i < count - 1;i++)
+	{
+		for(j = 0;j < count-i-1;j++)
+		{
+			if(strcmp(filenames[j],filenames[j+1]) > 0)  // j > j+1
+			{
+				strcpy(temp,filenames[j+1]);
+				temp[strlen(filenames[j+1])]  = '\0';
+				strcpy(filenames[j+1],filenames[j]);
+				filenames[j+1][strlen(filenames[j])] = '\0';
+				strcpy(filenames[j],temp);
+				filenames[j][strlen(temp)] = '\0';
+			}
+		}
+	}
+
+	for(i = 0;i < count;i++)
+	{
+	//	if(strcmp(filenames[i],"") == 0) continue;
+		display(flag_param,filenames[i]);
+	}
+	int k;
+	if(flag_param & PARAM_R)
+	{
+		for(i = 0;i < count;i++)
+		{
+			if(lstat(filenames[i],&buf) == -1)
+			{
+				my_err("stat",__LINE__);
+			}
+
+			if(S_ISDIR(buf.st_mode))
+			{
+				        for(j = 0,k = 0;j < strlen(filenames[i]);j++)
+					{
+				                if(filenames[i][j] == '/')
+              				        {
+        		        		        k = 0;
+              	 	 			        continue;
+       					        }
+     					        name[k++] = filenames[i][j];
+    	  				}
+		     		   name[k] = '\0';
+
+
+
+				if(strcmp(name,".") == 0 || strcmp(name,"..") == 0)  continue;
+				int len = strlen(filenames[i]);
+				if(flag_param & PARAM_A)
+				{
+					if(filenames[i][strlen(filenames[i]) - 1] != '/')
+					{
+						filenames[i][len] = '/';
+						filenames[i][len+1] = '\0';
+					}
+					display_dir(flag_param,filenames[i]);
+					free(filenames[i]);
+				}
+				{
+					if(name[0] != '.')
+					{
+						if(filenames[i][strlen(filenames[i]) - 1] != '/')
+						{
+							filenames[i][len] = '/';
+							filenames[i][len+1] = '\0';
+						}
+						display_dir(flag_param,filenames[i]);
+						free(filenames[i]);
+					}
+				}
+			}
+
+		}
+	}
+
+	closedir(dir);
+
+	//如果命令中没有 -l 选项,打印一个换行符
+	//当 flag 中 没有 l 选项时
+	if((flag_param & PARAM_L) == 0)   printf( "\n");
+
+
 }
+//}
 int main(int argc,char **argv){
         char path[PATH_MAX+1];
         char param[32];         //保存命令行参数，目标文件名和目录名不在这里
