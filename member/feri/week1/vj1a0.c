@@ -1,15 +1,22 @@
 #include <stdio.h>
 int lst=100;
-int judge(long long n,int st)
+int xlst;
+long long m;
+void judge(long long n,int st)
 {
     int i;
     int div[3]={2,3,5};
-    if(n==1)
+    if(n==m&&n%2!=0&&n%3!=0&&n%5!=0)
     {
-        if(st<lst)
-            lst=st;
-        return 0;
+        printf("-1\n");
+        return ;
     }
+     if(n==1)          
+     {              
+         if(st<lst) 
+             lst=st;
+         return ;   
+     }              
     for(i=0;i<3;i++)
     {
         if(n%div[i]==0)
@@ -36,26 +43,33 @@ int judge(long long n,int st)
                 break;
             }
         }
+        if(i==2&&n!=m&&(n%2==0||n%3==0||n%4==0))
+        {
+            return ;
+        }
+        else if(i==2&&n%2!=0&&n%3!=0&&n%5!=0&&n!=m)
+        {
+            xlst=1;
+            return ;
+        }
     }
-    if(n!=1&&n%2!=0&&n%3!=0&&n%5!=0)
+    if(xlst==1)
     {
         printf("-1\n");
-        return -1;
+        return ;
     }
-    return lst;
+    else
+    {
+        printf("%d\n",lst);
+    }
+    return;
 }
 int main()
 {
-    int a;
     long long int n;
     int steps=0;
     scanf("%lld",&n);
-    if(n%7==0||n%11==0||n%13==0)
-    {
-        printf("-1\n");
-        return 0;
-    }
-    a=judge(n,steps);
-        printf("%d\n",a);
+    m=n;
+    judge(n,steps);
     return 0;
 }
