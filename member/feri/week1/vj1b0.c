@@ -29,8 +29,8 @@ int main()
         }
         if(max[j]==0)
         {
-            if(ma==0||mb==0)
-            max[j]=0;
+            if(ma==0)
+                max[j]=0;
             else if(ma>mb)
             {
             max[j]=mb+(ma-mb)/3;
@@ -48,12 +48,12 @@ int main()
             }
             else if(ma>mb)
             {
-            max[j]=max[j]+mb;
-            max[j]=max[j]+(ma-mb)/3;
+                max[j]=max[j]+mb;
+                max[j]=max[j]+(ma-mb)/3;
             }
              else if(ma==mb)
             {
-            max[j]=max[j]+ma;
+                max[j]=max[j]+ma;
             }
         }
         j++;
@@ -62,5 +62,5 @@ for(i=0;i<m;i++)
 {
     printf("%d\n",max[i]);
 }
-    return 0;
+return 0;
 }
