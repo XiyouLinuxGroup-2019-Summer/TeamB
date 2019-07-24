@@ -8,6 +8,8 @@
 #include <wait.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include<readline/readline.h>
+#include<readline/history.h>
 
 #define BUFFSIZE 64
 #define normal 0        // 一般的命令
@@ -15,21 +17,16 @@
 #define in_redirect 2   // 输入重定向
 #define have_pipe 3     // 命令中有管道
 void print_prompt();    // 打印提示符
-void get_input(char *); // 读取用户输入的命令
+/* void get_input(char *); // 读取用户输入的命令 */
 // 二维数组作为函数参数，第1维长度可以不指定，但必须指定第2维长度
 // 也可使用指向含8个元素一维数组的指针，char (*a)[8]
 void explain_input(char *, int *, char a[][256]); // 解析输入的命令
 void do_cmd(int, char a[][256]);  // 执行命令
 int find_command(char *);       // 查找命令中的可执行程序
 
-void ctrlcHandle(int signum)
-{
-    //	printf("\n%s-------------", CMD_TIP);
-}
-
 int main(int argc, char *argv[])
 {
-    signal(SIGINT, ctrlcHandle);
+    /* signal(SIGINT,SIG_IGN); */
     char arglist[100][256];
     int argcount = 0;
     char **arg = NULL;
@@ -44,11 +41,16 @@ int main(int argc, char *argv[])
     while(1)
     {
         memset(buf,0,256);
+        char *str = readline("\033[47;33mSSX:\033[0m");
         print_prompt(); // 打印提示符
-        get_input(buf); // 读取用户输入
-        if(!strcmp(buf,"exit") || !strcmp(buf,"long out")){
+        
+        strcpy(buf,str);
+        add_history(buf);
+        if(strcmp(buf,"exit\n")==0 || strcmp(buf,"long out\n") == 0){
             break;
         }
+
+        if(strcmp(buf,"\n")==0) continue;
 
         for(int i=0; i<100; i++)     // 初始化存放命令及其参数的数组
             arglist[i][0] = '\0';
@@ -59,10 +61,10 @@ int main(int argc, char *argv[])
 
     if(buf != NULL){
         free(buf);
+        /* free(str); */
         buf = NULL;
+        /* str = NULL; */
     }
-
-
     exit(0);
 
 }
@@ -70,18 +72,23 @@ int main(int argc, char *argv[])
 
 void print_prompt()
 {
-    printf("RandyLambert$ ");
+    char *a = (char *)malloc(256);
+    getcwd(a,256);
+    printf("[0m\033[47;34m%s\033[0m$",a);
+    /* printf("RandyLambert%s$",a); */
     //      fflush(stdout); // fflush 冲洗stdout
+    free(a);
 }
 
-void get_input(char *buf)
+/*void get_input(char *buf)
 {
     int len = 0;
     int ch;
-
+        
     ch = getchar();
     while(len < 256 && ch != '\n'){
         buf[len++] = ch;
+        ch = getchar();
     }
 
     if(len >= 256){
@@ -94,6 +101,7 @@ void get_input(char *buf)
         buf[len] = '\0';
     }   
 }
+*/
 
 // 解析buf中的命令，结果存入arglist中，命令及其参数个数为argcount
 // 如，"ls -l"命令，则arglist[0]、arglist[1]分别为ls、-l
@@ -101,8 +109,8 @@ void explain_input(char *buf, int *argcount, char arglist[100][256])
 {
     char *p = buf;
     char *q = buf;
-    int i = 0;
     int number = 0;
+
     while(1){
         if(p[0] == '\n')
             break;
@@ -114,7 +122,7 @@ void explain_input(char *buf, int *argcount, char arglist[100][256])
             number = 0;
             while((q[0]!='\n') && (q[0]!=' ')){
                 number++;
-                i++;
+                q++;
             }
             strncpy(arglist[*argcount],p,number+1);
             arglist[*argcount][number] = '\0';
@@ -122,14 +130,23 @@ void explain_input(char *buf, int *argcount, char arglist[100][256])
             p = q;
         }
     }
+
+
+    /* for(int i = 0;i < *argcount;i++){ */
+    /*     printf("dasd:%s\n",arglist[i]); */
+    /* } */
 }
+
+
+
+
 
 void do_cmd(int argcount, char arglist[100][256])
 {
     // 指针数组，每个元素指向二维数组中的一行
     // arg存放所有命令及其参数，argnext存放管道符后的命令
     char *arg[argcount+1], *argnext[argcount+1];
-    int i, flag = 0, how = 0, background = 0;
+    int i, flag = 0, how = 0, background = 0, cnt = 0;
     char *file;
     pid_t pid;
     int fd,status;
@@ -137,8 +154,15 @@ void do_cmd(int argcount, char arglist[100][256])
     // 提取命令
     for(int i = 0;i < argcount;i++){
         arg[i] = (char *)arglist[i];
+        /* printf("%s\n",arg[i]); */
+        /* if(strncmp("ls",arg[i],2)==0){ */
+
+        /* } */
     }
     arg[argcount] = NULL;
+    if(strcmp(arg[0],"ls\n") == 0){
+        strcpy(arg[0],"ls --color=auto\n");
+    }
 
     //查看命令行是否有后台运行符
 
@@ -179,10 +203,22 @@ void do_cmd(int argcount, char arglist[100][256])
     {
         if(strcmp(arg[i], ">") == 0)
         {
-            flag++;
-            how = out_redirect;
-            if(arg[i+1] == NULL)    // 输出重定向符在最后面
-                flag++; // 使flag大于1，告知命令格式错误
+            if(strcmp(arg[i+1],">") != 0){
+                flag++;
+                how = out_redirect;
+                if(arg[i+1] == NULL)    // 输出重定向符在最后面
+                    flag++; // 使flag大于1，告知命令格式错误
+            }
+
+
+            else if(strcmp(arg[i+1],">") == 0){
+                cnt++;
+                flag++;
+                how = out_redirect;
+                if(arg[i+2] == NULL)
+                    flag++;
+            }
+            
         }
         if(strcmp(arg[i], "<") == 0)
         {
@@ -255,7 +291,7 @@ void do_cmd(int argcount, char arglist[100][256])
         //输入的命令中不含》《|
         if(pid == 0){
             if(!(find_command(arg[0]))){
-                printf("%s : command not found\n");
+                printf("%s : command not found\n",arg[0]);
                 exit(0);
             }
             execvp(arg[0],arg);
