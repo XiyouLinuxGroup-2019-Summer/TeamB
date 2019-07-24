@@ -27,7 +27,7 @@ int main()
             if(a[i]%3==2)
                 mb++;
         }
-        if(max[j]==0)
+        /*if(max[j]==0)
         {
             if(ma>mb)
             {
@@ -37,9 +37,7 @@ int main()
             max[j]=ma+(mb-ma)/3;
             else if(ma==mb)
             max[j]=ma;
-        }
-        else
-        {
+        }*/
             if(mb>ma)
             {
                 max[j]=max[j]+ma;
@@ -54,7 +52,6 @@ int main()
             {
                 max[j]=max[j]+ma;
             }
-        }
         j++;
 }
 for(i=0;i<m;i++)
