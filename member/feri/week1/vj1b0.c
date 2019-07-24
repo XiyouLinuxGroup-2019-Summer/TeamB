@@ -5,11 +5,15 @@ int main()
     int i,ma=0,mb=0;
     int k;
     scanf("%d",&m);
+    int max[m];
+    for(i=0;i<m;i++)
+    {
+        max[i]=0;
+    }
     scanf("%d",&k);
     while(j!=m)
     {
     int a[k];
-    int max=0;
     for(i=0;i<k;i++)
     {
         scanf("%d",&a[i]);
@@ -17,7 +21,7 @@ int main()
     for(i=0;i<k;i++)
     {
         if(a[i]%3==0)
-            max++;
+            max[j]++;
         if(a[i]%3==1)
             ma++;
         if(a[i]%3==2)
@@ -25,19 +29,22 @@ int main()
     }
     if(mb>ma)
     {
-        max=max+ma;
+        max[j]=max[j]+ma;
     }
     else if(ma>mb)
     {
-        max=max+mb;
-        max=max+(ma-mb)/3;
+        max[j]=max[j]+mb;
+        max[j]=max[j]+(ma-mb)/3;
     }
     else if(ma==mb)
     {
-        max=max+ma;
+        max[j]=max[j]+ma;
     }
-    printf("%d\n",max);
     j++;
+}
+for(i=0;i<m;i++)
+{
+    printf("%d\n",max[i]);
 }
     return 0;
 }
