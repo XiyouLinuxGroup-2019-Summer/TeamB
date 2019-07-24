@@ -10,9 +10,10 @@ int main()
     {
         max[i]=0;
     }
-    scanf("%d",&k);
     while(j!=m)
     {
+        ma=0;mb=0;
+    scanf("%d",&k);
         int a[k];
         for(i=0;i<k;i++)
         {
