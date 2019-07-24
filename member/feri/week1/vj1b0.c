@@ -13,42 +13,50 @@ int main()
     scanf("%d",&k);
     while(j!=m)
     {
-    int a[k];
-    for(i=0;i<k;i++)
-    {
-        scanf("%d",&a[i]);
-    }
-    for(i=0;i<k;i++)
-    {
-        if(a[i]%3==0)
-            max[j]++;
-        if(a[i]%3==1)
-            ma++;
-        if(a[i]%3==2)
-            mb++;
-    }
-    if(max[j]==0)
-    {
-        max[j]=ma;
-    }
-    else
-    {
-
-    if(mb>ma)
-    {
-        max[j]=max[j]+ma;
-    }
-    else if(ma>mb)
-    {
-        max[j]=max[j]+mb;
-        max[j]=max[j]+(ma-mb)/3;
-    }
-    else if(ma==mb)
-    {
-        max[j]=max[j]+ma;
-    }
-    }
-    j++;
+        int a[k];
+        for(i=0;i<k;i++)
+        {
+            scanf("%d",&a[i]);
+        }
+        for(i=0;i<k;i++)
+        {
+            if(a[i]%3==0)
+                max[j]++;
+            if(a[i]%3==1)
+                ma++;
+            if(a[i]%3==2)
+                mb++;
+        }
+        if(max[j]==0)
+        {
+            if(ma==0||mb==0)
+            max[j]=0;
+            else if(ma>mb)
+            {
+            max[j]=mb+(ma-mb)/3;
+            }
+            else if(ma<mb)
+            max[j]=ma;
+            else if(ma==mb)
+            max[j]=ma;
+        }
+        else
+        {
+            if(mb>ma)
+            {
+                max[j]=max[j]+ma;
+            }
+            else if(ma>mb)
+            {
+            max[j]=max[j]+mb;
+            max[j]=max[j]+(ma-mb)/3;
+            }
+             else if(ma==mb)
+            {
+            max[j]=max[j]+ma;
+            }
+        }
+        j++;
 }
 for(i=0;i<m;i++)
 {
