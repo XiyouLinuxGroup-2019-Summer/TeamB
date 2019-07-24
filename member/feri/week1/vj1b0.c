@@ -27,6 +27,13 @@ int main()
         if(a[i]%3==2)
             mb++;
     }
+    if(max[j]==0)
+    {
+        max[j]=ma;
+    }
+    else
+    {
+
     if(mb>ma)
     {
         max[j]=max[j]+ma;
@@ -39,6 +46,7 @@ int main()
     else if(ma==mb)
     {
         max[j]=max[j]+ma;
+    }
     }
     j++;
 }
