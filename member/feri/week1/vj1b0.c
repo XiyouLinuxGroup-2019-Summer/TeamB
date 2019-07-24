@@ -29,14 +29,12 @@ int main()
         }
         if(max[j]==0)
         {
-            if(ma==0)
-                max[j]=0;
-            else if(ma>mb)
+            if(ma>mb)
             {
             max[j]=mb+(ma-mb)/3;
             }
             else if(ma<mb)
-            max[j]=ma;
+            max[j]=ma+(mb-ma)/3;
             else if(ma==mb)
             max[j]=ma;
         }
@@ -45,6 +43,7 @@ int main()
             if(mb>ma)
             {
                 max[j]=max[j]+ma;
+                max[j]=max[j]+(mb-ma)/3;
             }
             else if(ma>mb)
             {
