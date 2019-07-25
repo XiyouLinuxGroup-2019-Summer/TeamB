@@ -143,8 +143,6 @@ void display_attribute(struct stat buf,char * name)
     printf("%-8s ",psd->pw_name);
     printf("%-8s",grp->gr_name);
     
-    /* puts(); */
-    /* puts(); */
 
     printf("%6ld",buf.st_size);//打印文件大小
     sum = sum + buf.st_size;
@@ -398,7 +396,7 @@ void display_dir(int flag_param,char * path)
 }
 
 int main(int argc,char **argv){
-                /* printf("path:\n"); */
+
     int i=0,j=0,k=0,num=0;                                                                                     
     char path[1000+1];
     char param[40];//保存命令行参数
