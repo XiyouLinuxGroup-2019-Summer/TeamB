@@ -132,7 +132,7 @@ void display(int flag,char *pathname)
         name[j++]=pathname[i];
     }
     name[j]='\0';
-    //lstat(pathname,&buf);
+    lstat(pathname,&buf);
     switch(flag)
     {
     case PARAM_NONE:
@@ -245,6 +245,7 @@ void display_digui(int flag_param,char *path)
         if(lstat(filenames[i],&buf)==-1)
         {
             perror("lstat:");
+            continue;
             //exit(1);
         }
         if(S_ISDIR(buf.st_mode)&&names[0]!='.') 
