@@ -7,13 +7,15 @@
 #include<fcntl.h>
 #include<sys/stat.h>
 #include<dirent.h>
-
+#include<readline/readline.h>
+#include<readline/history.h>
+#include<pwd.h>
 
 #define normal           0   //一般命令
 #define out_redirect     1   //输出重定向
 #define in_redirect      2   //输入重定向(会覆盖)
-#define in_add_redirect  4   //输入重定向(追加)
-#define out_add_redirect 5   //输出重定向(追加)
+#define out_add_redirect 4   //输出重定向(追加)
+#define in_add_redirect  5   //输入重定向(追加)
 #define have_pipe        3   //命令中有管道
 
 void print_prompt();                            //打印提示符
@@ -22,14 +24,19 @@ void explain_input(char *,int *,char a[][256]);     //对输入命令进行解�
 void do_cmd(int,char a[][256]);                     //执行命令
 int find_command(char *);                       //查找命令中的可执行程序
 
+char cd_pathname[PATH_MAX] = "/home/zzy";   //默认家目录
 
 int main(int argc,char **argv){
+    
+    signal(SIGINT,SIG_IGN);     //防止Ctrl + c 退出程序
+    
     int i;
-    int argcount = 0;
-    char arglist[100][256];
+    int argcount = 0;       //命令个数
+    char arglist[100][256]; //存储命令
     char **arg = NULL;
     char *buf = NULL;
     buf = (char *)malloc(256);
+
     if(buf == NULL){
         perror("malloc failed");
         exit(-1);
@@ -42,16 +49,18 @@ int main(int argc,char **argv){
         
         if(strcmp(buf,"exit\n") == 0)   break;  //输入exit时，退出本程序
         
+        if(strcmp(buf,"\n") == 0)   continue;   //输入回车，重新循环
+        
         for(i = 0;i < 100;i++){     //初始化
             arglist[i][0] = '\0';
         }
         argcount = 0;   //命令个数
-
+        
         explain_input(buf,&argcount,arglist);   //对输入命令进行解析
         do_cmd(argcount,arglist);   //执行命令
     }
 
-    if(buf != NULL){
+    if(buf != NULL){    //释放内存
         free(buf);
         buf = NULL;
     }
@@ -63,13 +72,66 @@ int main(int argc,char **argv){
 
 //打印提示符
 void print_prompt(){
-    printf("[myshell]zzy@zzy:");
+    //printf("[myshell]zzy@zzy:");
+     int uid;
+     struct passwd *data;
+     char name[50];
+     char pathname[100];
+
+     uid = getuid();    //获取用户id
+     data = getpwuid(uid);  //获取用户信息
+     printf("%s@",data->pw_name);
+     gethostname(name,50);
+     printf("%s:",name);
+     getcwd(pathname,100);
+
+     if(strncmp(pathname,cd_pathname,9) != 0){     // 判断是不是家目录
+        printf("%s",pathname);
+        return;
+     }
+     
+     //对路径进行处理，显示路径
+     int len = strlen(pathname);
+     int i,j,a = 0;
+     char pathname_t[100];
+     for(i = 0;i < len;i++){
+         if(pathname[i] == '/'){
+             a++;
+         }
+
+         if(a == 3){
+             break;
+         }
+     }
+     for(j = i;j < len;j++){
+         pathname_t[j-i] = pathname[j];
+     }
+     pathname_t[len-i] = '\0';
+     strcpy(pathname,"~");
+     strcat(pathname,pathname_t);
+     printf("%s",pathname);
+
+     if(uid == 0) 
+         printf("#");
+     else
+         printf("$");
+     
+     return;
 }
 
 
 
 
 void get_input(char *buf){   //  获取用户输入
+    
+    //实现输入时代码补全
+    char * str = readline(" ");
+    //添加到历史，实现上下键寻找命令
+    add_history(str);       
+    strcpy(buf,str);
+    buf[strlen(buf)] = '\n';
+    
+    /*常规
     int len = 0;
     int ch;
 
@@ -87,7 +149,7 @@ void get_input(char *buf){   //  获取用户输入
 
     buf[len] = '\n';
     len++;
-    buf[len] = '\0';
+    buf[len] = '\0';*/
 }
 
 //解析 buf 中存的命令，将结果存入 arglist 中，命令以回车符号 \n 做结尾
@@ -100,7 +162,7 @@ void explain_input(char *buf,int *argcount,char arglist[100][256]){
         if(p[0] == '\n')
             break;
 
-        if(p[0] == ' '){
+        if(p[0] == ' '){   //跳过空格寻找第一个命令字符
             p++;
         }
         else{
@@ -110,7 +172,7 @@ void explain_input(char *buf,int *argcount,char arglist[100][256]){
                 number++;
                 q++;
             }
-            strncpy(arglist[*argcount],p,number+1);
+            strncpy(arglist[*argcount],p,number+1); //存储多个命令
             arglist[*argcount][number] = '\0';
             *argcount = *argcount + 1;
             p = q;
@@ -139,8 +201,9 @@ int find_command(char *command){
                 return 1;
             }
         }
+
         closedir(dp);
-        i++;
+        i++;    //在path的其他目录寻找可执行程序或命令
     }
     return 0;
 }
@@ -149,6 +212,7 @@ int find_command(char *command){
 
 //执行命令
 void do_cmd(int argcount,char arglist[100][256]){
+
     int flag = 0;
     int how = 0;            //指示指令知否含有> ,< ,| ,
     int background = 0;     //标识命令中是否有后台运行标识符&
@@ -156,7 +220,7 @@ void do_cmd(int argcount,char arglist[100][256]){
     int i,fd;
     char    *arg[argcount+1];
     char    *argnext[argcount+1];
-    char    *file;
+    char    *file;   //文件名
     pid_t   pid;
 
     for(i = 0;i < argcount;i++){    //取出命令
@@ -177,53 +241,51 @@ void do_cmd(int argcount,char arglist[100][256]){
             }
         }
     }
-
-    for(i = 0;arg[i] != NULL;i++){
+    
+    for(i = 0;arg[i] != NULL;i++){  //查询是否存在重定向和管道符
         if(strcmp(arg[i],">") == 0){
             flag++;
             how = out_redirect;
             if(arg[i+1] == NULL)
                 flag++;
       
-        }
+        }        
+        if(strcmp(arg[i],">>") == 0){
 
-        /*if(strcmp(arg[i],">>") == 0){
-            flag++;
-            how = out_add_redirect;
-            if(arg[i+1] == NULL)
-                flag++;
-        }*/
-        
+              flag++;
+              how = out_add_redirect;
+              if(arg[i+1] == NULL)
+                  flag++;
+          }
         if(strcmp(arg[i],"<") == 0){
             flag++;
             how = in_redirect;
-            if(i == 0)
+            if(i == 0){
                 flag++;
+            }
         }
-
-        /*if(strcmp(arg[i],"<<") == 0){
-
-            flag++;
-            how = out_add_redirect;
-            if(i == 0)
-                flag++;
-        }*/
-
+        if(strcmp(arg[i],"<<") == 0){
+              flag++;
+              how = in_add_redirect;
+              if(i == 0)
+                  flag++;
+          }
         if(strcmp(arg[i],"|") == 0){
             flag++;
             how = have_pipe;
-            if(arg[i+1] == NULL)
+            if(arg[i+1] == NULL){
                 flag++;
+            }
             if(i == 0)
                 flag++;
         }
-
+    }
+        
         //flag大于1，说明命令中含有多个>,<,|，不支持,或者格式错误，如"ls -l /tmp >"
         if(flag > 1){
             printf("wrong command!\n");
             return;
         }
-
         if(how == out_redirect){ //命令只含有一个输出重定向符号 ">"
             for(i = 0;arg[i] != NULL;i++){
                 if(strcmp(arg[i],">") == 0){
@@ -232,34 +294,30 @@ void do_cmd(int argcount,char arglist[100][256]){
                 }
             }
         }
-        
-        /*if(how == out_add_redirect){
+        if(how == in_redirect){ //命令只含有一个输入重定向符号 "<" 
+              for(i = 0;arg[i] != NULL;i++){
+                  if(strcmp(arg[i],"<") == 0){ 
+                      file = arg[i+1];
+                      arg[i] = NULL;
+                  }                                                                                                                                           
+              }   
+        }
+        if(how == out_add_redirect){
 		    for(i = 0;arg[i] != NULL;i++){
 			    if(strcmp(arg[i],">>") == 0){
 				    file = arg[i+1];
 				    arg[i] = NULL;
 				}
 		    }
-	    }*/
-
-        if(how == in_redirect){ //命令只含有一个输入重定向符号 "<" 
-            for(i = 0;arg[i] != NULL;i++){
-                if(strcmp(arg[i],"<") == 0){
-                    file = arg[i+1];
-                    arg[i] = NULL;
-                }
-            }
-        }
-
-        /*if(how == in_add_redirect){
+	    } 
+        if(how == in_add_redirect){
 		    for(i = 0;arg[i] != NULL;i++){
 			    if(strcmp(arg[i],"<<") == 0){
-				file = arg[i+1];
-				arg[i] = NULL;
+				    file = arg[i+1];
+				    arg[i] = NULL;
 			    }
 		    }
-	    }*/
-        
+	    }
         if(how == have_pipe){   //  命令行只含有一个管道符号
             for(i = 0;arg[i] != NULL;i++){  //将管道后面的部分存入argnext中，管道后面部分也是一个可执行的shell命令
                 if(strcmp(arg[i],"|") == 0){
@@ -273,7 +331,6 @@ void do_cmd(int argcount,char arglist[100][256]){
                 }
             }
         }
-
         if((pid = fork()) < 0){
             printf("fork error!\n");
             return;
@@ -293,6 +350,7 @@ void do_cmd(int argcount,char arglist[100][256]){
                 }
                 break;
             case 1:
+            //case 5:
                 //输入命令含有输入重定向符>
                 if(pid == 0){
                       if(!(find_command(arg[0]))){
@@ -306,6 +364,7 @@ void do_cmd(int argcount,char arglist[100][256]){
                   }
                   break;
             case 2:
+            //case 4:
                   //输入命令含有输出重定向符<
                 if(pid == 0){
                         if(!(find_command(arg[0]))){
@@ -324,6 +383,7 @@ void do_cmd(int argcount,char arglist[100][256]){
                         int pid2;
                         int status2;
                         int fd2;
+                        
                         if((pid2 = fork()) < 0){
                             printf("fork2 error!\n");
                             return;
@@ -355,8 +415,21 @@ void do_cmd(int argcount,char arglist[100][256]){
                         exit(0);
                 
                 }
-        
                 break;
+            case 4:
+                if(pid == 0){
+                    if(pid == 0){
+                        if(!(find_command(arg[0]))){
+                            printf("%s : command not found\n",arg[0]);
+                            exit(0);
+                        }
+                        fd = open(file,O_RDWR | O_CREAT | O_APPEND);
+                        dup2(fd,1);
+                        execvp(arg[0],arg);
+                        exit(0);
+                    }
+                break;
+                }
             default:
                 break;
         }
@@ -373,4 +446,5 @@ void do_cmd(int argcount,char arglist[100][256]){
         }
 
     }
-}
+
+
