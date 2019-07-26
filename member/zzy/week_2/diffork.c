@@ -10,8 +10,8 @@ int main(){
     int i;
     int var = 0;
     printf("fork is different with fork\n");
-    //pid = fork();
-    pid = vfork();
+    pid = fork();
+    //pid = vfork();
     switch(pid){
         case 0:
             i = 3;
