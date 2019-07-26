@@ -183,7 +183,8 @@ void display_digui(int flag_param,char *path)
     DIR *dir;                                                      
     char names[NAME_MAX+1];
     int count=0;                                                   
-    char filenames[1000][PATH_MAX+1],temp[PATH_MAX+1];                               
+    char **filenames;
+    char temp[PATH_MAX+1];                               
     dir=opendir(path);                                             
     while((ptr=readdir(dir))!=NULL)                                
     {                                                              
@@ -191,7 +192,13 @@ void display_digui(int flag_param,char *path)
             g_maxlen=strlen(ptr->d_name);                          
         count++;                                                   
     }                                                              
-    closedir(dir);                                                 
+    closedir(dir);                                              
+    filenames=(char **)malloc(count*sizeof(char *));
+    for(i=0;i<count;i++)
+    {
+        filenames[i]=(char *)malloc(PATH_MAX);
+    }
+    //printf("%ld\n",strlen(filenames[0]));
     dir=opendir(path);                                             
     for(i=0;i<count;i++)                                           
     {                                                              
@@ -232,13 +239,13 @@ void display_digui(int flag_param,char *path)
                 k=0;
                 continue;
             }
-            names[k++]=filenames[i][j];
+       names[k++]=filenames[i][j];
         }
         names[k]='\0';//youwenti
         if(lstat(filenames[i],&buf)==-1)
         {
             perror("lstat:");
-            exit(1);
+            //exit(1);
         }
         if(S_ISDIR(buf.st_mode)&&names[0]!='.') 
         {
@@ -262,6 +269,11 @@ void display_digui(int flag_param,char *path)
             continue;
         }
     }
+    for(i=0;i<count;i++)
+    {
+        free(filenames[i]);
+    }
+    free(filenames);
     closedir(dir);                                                 
 }                                                                  
 void display_dir(int flag_param,char *path)
@@ -272,7 +284,6 @@ void display_dir(int flag_param,char *path)
     int count=0;
     char filenames[1000][PATH_MAX+1],temp[PATH_MAX+1];
     dir=opendir(path);
-    //printf("%s#\n",path);
     while((ptr=readdir(dir))!=NULL)
     {
         if(g_maxlen<strlen(ptr->d_name))
@@ -319,6 +330,7 @@ int main(int argc,char *argv[])
     int flag_param=PARAM_NONE;
     char param[32];
     struct stat buf;
+ //   printf("@@@@@@@\n");
     for(i=0;i<argc;i++)
     {
         if(argv[i][0]=='-')
@@ -378,6 +390,7 @@ int main(int argc,char *argv[])
         else
         {
             strcpy(path,argv[i]);
+            //printf("$$%s#",argv[i]);
             path[strlen(argv[i])]='\0';
             if(stat(path,&buf)==-1)
             {
