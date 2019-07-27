@@ -17,14 +17,26 @@
 #define out_add_redirect 4   //输出重定向(追加)
 #define in_add_redirect  5   //输入重定向(追加)
 #define have_pipe        3   //命令中有管道
+#define FILE_NAME       "/temp/youdonotknowf" //文件
+#define HOME "/home/zzy"     //起始目录
+
+//颜色
+#define PRINT_RED(s)    printf("\033[0;31m%s\033[0;39m",s);
+#define PRINT_GREEN(s)    printf("\033[0;32m%s\033[0;39m",s);
+#define PRINT_YELLOW(s)    printf("\033[0;33m%s\033[0;39m",s);
+#define PRINT_BULE(s)    printf("\033[0;34m%s\033[0;39m",s);
+#define PRINT_PURPLE(s)    printf("\033[0;35m%s\033[0;39m",s);/*紫色*/
+
 
 void print_prompt();                            //打印提示符
 void get_input(char *);                         //得到输入命令
 void explain_input(char *,int *,char a[][256]);     //对输入命令进行解析
 void do_cmd(int,char a[][256]);                     //执行命令
 int find_command(char *);                       //查找命令中的可执行程序
+void cd_fun(char *arg[],int count);             //cd命令实现
 
-char cd_pathname[PATH_MAX] = "/home/zzy";   //默认家目录
+char start_pathname[PATH_MAX] = HOME;   //最开始起始目录家目录
+char cd_pathname[PATH_MAX];
 
 int main(int argc,char **argv){
     
@@ -33,7 +45,6 @@ int main(int argc,char **argv){
     int i;
     int argcount = 0;       //命令个数
     char arglist[100][256]; //存储命令
-    char **arg = NULL;
     char *buf = NULL;
     buf = (char *)malloc(256);
 
@@ -47,9 +58,11 @@ int main(int argc,char **argv){
         print_prompt();     //打印提示符
         get_input(buf);     //接收输入命令
         
-        if(strcmp(buf,"exit\n") == 0)   break;  //输入exit时，退出本程序
+        if(strcmp(buf,"exit\n") == 0 || strcmp("logout\n",buf) == 0)   
+            break;  //输入exit时，退出本程序
         
-        if(strcmp(buf,"\n") == 0)   continue;   //输入回车，重新循环
+        if(strcmp(buf,"\n") == 0)   
+            continue;   //输入回车，重新循环
         
         for(i = 0;i < 100;i++){     //初始化
             arglist[i][0] = '\0';
@@ -60,7 +73,7 @@ int main(int argc,char **argv){
         do_cmd(argcount,arglist);   //执行命令
     }
 
-    if(buf != NULL){    //释放内存
+    if(buf == NULL){    //释放内存
         free(buf);
         buf = NULL;
     }
@@ -75,17 +88,19 @@ void print_prompt(){
     //printf("[myshell]zzy@zzy:");
      int uid;
      struct passwd *data;
-     char name[50];
-     char pathname[100];
+     char name[500];
+     char pathname[500];
 
      uid = getuid();    //获取用户id
      data = getpwuid(uid);  //获取用户信息
-     printf("%s@",data->pw_name);
-     gethostname(name,50);
-     printf("%s:",name);
-     getcwd(pathname,100);
+     PRINT_BULE(data->pw_name);
+     PRINT_BULE("@");
+     gethostname(name,500);
+     PRINT_BULE(name);
+     PRINT_BULE(":");
+     getcwd(pathname,500);
 
-     if(strncmp(pathname,cd_pathname,9) != 0){     // 判断是不是家目录
+     if(strncmp(pathname,start_pathname,9) != 0){     // 判断是不是家目录
         printf("%s",pathname);
         return;
      }
@@ -93,7 +108,7 @@ void print_prompt(){
      //对路径进行处理，显示路径
      int len = strlen(pathname);
      int i,j,a = 0;
-     char pathname_t[100];
+     char pathname_t[500];
      for(i = 0;i < len;i++){
          if(pathname[i] == '/'){
              a++;
@@ -109,12 +124,14 @@ void print_prompt(){
      pathname_t[len-i] = '\0';
      strcpy(pathname,"~");
      strcat(pathname,pathname_t);
-     printf("%s",pathname);
+     PRINT_BULE(pathname);
 
-     if(uid == 0) 
-         printf("#");
-     else
-         printf("$");
+     if(uid == 0){
+         PRINT_BULE("#");
+     }
+     else{
+         PRINT_BULE("$");
+     }
      
      return;
 }
@@ -125,7 +142,7 @@ void print_prompt(){
 void get_input(char *buf){   //  获取用户输入
     
     //实现输入时代码补全
-    char * str = readline(" ");
+    char * str = readline("");
     //添加到历史，实现上下键寻找命令
     add_history(str);       
     strcpy(buf,str);
@@ -209,6 +226,23 @@ int find_command(char *command){
 }
 
 
+void cd_fun(char *arg[],int count){
+    getcwd(cd_pathname,100);
+          if((count == 1) || strcmp(arg[1],"~") == 0){
+              strcpy(start_pathname,cd_pathname);
+              chdir(HOME);
+          }
+          else if(strcmp(arg[1],"-") == 0){
+              printf("%s\n",start_pathname);
+              chdir(start_pathname);
+              strcpy(start_pathname,cd_pathname);
+          }
+          else{
+              strcpy(start_pathname,cd_pathname);
+              chdir(arg[1]);
+          }
+
+}
 
 //执行命令
 void do_cmd(int argcount,char arglist[100][256]){
@@ -227,6 +261,12 @@ void do_cmd(int argcount,char arglist[100][256]){
         arg[i] = (char *)arglist[i];
     }
     arg[argcount] = NULL;
+    
+    if(strcmp(arg[0],"cd") == 0){   //cd命令
+        cd_fun(arg,argcount);
+    }
+
+
 
     for(i = 0;i < argcount;i++){    //查看是否存在后台运行符
         if(strncmp(arg[i],"&",1) == 0){
@@ -342,6 +382,8 @@ void do_cmd(int argcount,char arglist[100][256]){
                 //输入命令不含>,<,和|
                 if(pid == 0){
                     if(!(find_command(arg[0]))){
+                        if(strcmp(arg[0],"cd") == 0)
+                            exit(0);
                         printf("%s command not found!\n",arg[0]);
                         exit(0);
                     }
@@ -393,7 +435,7 @@ void do_cmd(int argcount,char arglist[100][256]){
                                 printf("%s : command not fount!\n",arg[0]);
                                 exit(0);
                             }
-                            fd2 = open("tmp/youdonotknowf",O_WRONLY | O_CREAT | O_TRUNC,0644);
+                            fd2 = open("FILE_NAME",O_WRONLY | O_CREAT | O_TRUNC,0644);
                             dup2(fd2,1);
                             execvp(arg[0],arg);
                             exit(0);
@@ -406,14 +448,13 @@ void do_cmd(int argcount,char arglist[100][256]){
                             printf("%s : command not found!\n",argnext[0]);
                             exit(0);
                         }
-                        fd2 = open("/temp/youdonotknowf",O_RDONLY);
+                        fd2 = open(FILE_NAME,O_RDONLY);
                         dup2(fd2,0);
                         execvp(argnext[0],argnext);
 
-                        if(remove("/temp/youdonotknowd"))
+                        if(remove(FILE_NAME))
                             printf("remove error!\n");
                         exit(0);
-                
                 }
                 break;
             case 4:

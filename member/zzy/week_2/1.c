@@ -3,9 +3,9 @@
 int main()
 {
     //while(1){}
-    int n;
-    scanf("%d",&n);
-    printf("Hello world  %d\n",n);
+    int n,m;
+    scanf("%d %d",&n,&m);
+    printf("Hello world  %d %d\n",n,m);
     return 0;
 }
 
