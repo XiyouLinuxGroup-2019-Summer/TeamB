@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <readline/readline.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <fcntl.h>
@@ -8,10 +9,14 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #define normal 0
-#define out 1
-#define in 2
+#define outa 1
+#define outb 4
+#define ina 2
 #define pipe 3
-void input(char *buf);
+#define BEGIN(x,y) "\033["#x";"#y"m"
+#define BLOD "\033[1m"
+#define CLOSE "\033[0m"
+char *input();
 void print_prompt();
 void explain_input(char *buf,int *argcount,char analycmd[][256]);
 void do_cmd(int argcount,char analycmd[][256]);
@@ -22,21 +27,17 @@ int main()
     int i;
     char analycmd[100][256];
     char *buf=NULL;
-    buf=(char *)malloc(256*sizeof(char));
-    if(buf==NULL)
-    {
-        perror("malloc failed");
-        exit(-1);
-    }
+    signal(SIGINT,SIG_IGN);
+    //buf=(char *)malloc(256*sizeof(char));
     while(1)
     {
-        memset(buf,0,256);
-        print_prompt();
-        input(buf);
-        if(strcmp(buf,"exit\n")==0||strcmp(buf,"logout\n")==0)
+        buf=input();
+        if(strcmp(buf,"exit")==0||strcmp(buf,"logout")==0)
         {
             break;
         }
+        if(strcmp(buf,"\0")==0)
+            continue;
         for(i=0;i<100;i++)
         {
             analycmd[i][0]='\0';
@@ -45,34 +46,19 @@ int main()
         explain_input(buf,&argcount,analycmd);
         do_cmd(argcount,analycmd);
     }
-    if(buf!=NULL)
-    {
-        free(buf);
-        buf=NULL;
-    }
-    exit(0);
+    free(buf);
 }
-void print_prompt()
+char *input()
 {
-    printf("\033[28;45mferi's_shell$$:\033[0m");
-}
-void input(char *buf)
-{
-    char ch;
+    char bufb[256];
+    char *bufa=NULL;
     int len=0;
-    ch=getchar();
-    while(len<256&&ch!='\n')
-    {
-        buf[len++]=ch;
-        ch=getchar();
-    }
-    if(len==256)
-    {
-        printf("command is too long\n");
-        exit(-1);
-    }
-    buf[len++]='\n';
-    buf[len]='\0';
+    getcwd(bufb,256);
+    printf("\033[36;45m%s:\033[0m",bufb);
+    bufa=readline(BEGIN(49,45)"FERI'S SHELL$$:"CLOSE);
+    len=strlen(bufa);
+    bufa[len]='\0';
+    return bufa;
 }
 void explain_input(char *buf,int *argcount,char analycmd[][256])
 {
@@ -80,7 +66,7 @@ void explain_input(char *buf,int *argcount,char analycmd[][256])
     char *p=buf,*q=buf;
     while(1)
    {
-        if(*q=='\n')
+        if(*q=='\0')
         {
             break;
         }
@@ -92,12 +78,12 @@ void explain_input(char *buf,int *argcount,char analycmd[][256])
         {
             q=p;
             number=0;
-            while(*q!=' '&&*q!='\n')
+            while(*q!=' '&&*q!='\0')
             {
                 number++;
                 q++;
             }
-            strncpy(analycmd[*argcount],p,number+1);
+            strncpy(analycmd[*argcount],p,number);
             analycmd[*argcount][number]='\0';
             *argcount=*argcount+1;
             p=q;
@@ -113,7 +99,6 @@ void do_cmd(int argcount,char analycmd[][256])
     char *argnext[argcount+1];
     int how=0;
     int status;
-    int flag=0;
     //int background=0;
     char *file;
     pid_t pid;
@@ -122,56 +107,54 @@ void do_cmd(int argcount,char analycmd[][256])
         arg[i]=analycmd[i];
     }
     arg[argcount]=NULL;
+    if(strcmp(arg[0],"cd")==0)
+    {
+        chdir(arg[1]);
+        return ;
+    }
     for(i=0;arg[i]!=NULL;i++)
     {
         if(strcmp(arg[i],">")==0)
-        {
-            flag=1;
-            how=out;
-            if(arg[i+1]==NULL)
-            {
-                flag++;
-            }
-        }
+            how=outa;
+        if(strcmp(arg[i],">>")==0)
+            how=outb;
         if(strcmp(arg[i],"<")==0)
-        {
-            flag++;
-            how=in;
-            if(i==0)
-            {
-                flag++;
-            }
-        }
+            how=ina;
         if(strcmp(arg[i],"|")==0)
         {
-            flag++;
             how=pipe;
             if(arg[i+1]==NULL)
             {
-                flag++;
+                //flag++;
             }
             if(i==0)
             {
-                flag++;
+                //flag++;
             }
         }
     }
-    if(flag>1)
-    {
-        printf("wrong command\n");
-        return;
-    }
-    if(how==out)
+    if(how==outa||how==outb)
     {
         for(i=0;arg[i]!=NULL;i++)
         {
-            if(strcmp(arg[i],">")==0)
+            if(strcmp(arg[i],">")==0||strcmp(arg[i],">>")==0)
             {
                 file=arg[i+1];
                 arg[i]=NULL;
             }
         }
     }
+    if(how==ina)                                             
+    {                                                        
+        for(i=0;arg[i]!=NULL;i++)                            
+        {                                                    
+            if(strcmp(arg[i],"<")==0)
+            {                                                
+                file=arg[i+1];                               
+                arg[i]=NULL;                                 
+            }                                                
+        }                                                    
+    }                                                        
     if(how==pipe)
     {
         for(i=0;arg[i]!=NULL;i++)
@@ -222,6 +205,18 @@ void do_cmd(int argcount,char analycmd[][256])
         }
         break;
     case 2:
+        if(pid==0)                                      
+        {                                               
+            if(!(find_command(arg[0])))                 
+            {                                           
+                printf("%s:command not found\n",arg[0]);
+                exit(0);                                
+            }                                           
+            fd=open(file,O_RDWR);  
+            dup2(fd,0);                                 
+            execvp(arg[0],arg);                         
+            exit(0);                                    
+        }                                               
         break;
     case 3:
     if(pid==0)
@@ -256,13 +251,41 @@ void do_cmd(int argcount,char analycmd[][256])
             exit(0);
         }
         fd2=open("/tmp/youdonotkonwfile",O_RDONLY);
-        dup2(fd2,1);
+        dup2(fd2,0);
         execvp(argnext[0],argnext);
         if(remove("/tmp/youdonotkonwfile"))
             printf("remove error\n");
         exit(0);
     }
     break;
+    case 4:
+        if(pid==0)                                      
+        {                                               
+            if(!(find_command(arg[0])))                 
+            {                                           
+                printf("%s:command not found\n",arg[0]);
+                exit(0);                                
+            }                                           
+            fd=open(file,O_RDWR|O_CREAT|O_APPEND,0644);  
+            dup2(fd,1);                                 
+            execvp(arg[0],arg);                         
+            exit(0);                                    
+        }                                               
+        break;                                          
+   /* case 5:
+        if(pid==0)                                      
+        {                                               
+            if(!(find_command(arg[0])))                 
+            {                                           
+                printf("%s:command not found\n",arg[0]);
+                exit(0);                                
+            }                                           
+            fd=open(file,O_RDONLY);                     
+            dup2(fd,0);                                 
+            execvp(arg[0],arg);                         
+            exit(0);                                    
+        }                                               
+        break;                      */                    
     default :
         break;
     }
