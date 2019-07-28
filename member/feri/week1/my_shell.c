@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <readline/readline.h>
+#include <readline/history.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <fcntl.h>
@@ -56,6 +57,7 @@ char *input()
     getcwd(bufb,256);
     printf("\033[36;45m%s:\033[0m",bufb);
     bufa=readline(BEGIN(49,45)"FERI'S SHELL$$:"CLOSE);
+    add_history(bufa);
     len=strlen(bufa);
     bufa[len]='\0';
     return bufa;
@@ -99,7 +101,7 @@ void do_cmd(int argcount,char analycmd[][256])
     char *argnext[argcount+1];
     int how=0;
     int status;
-    //int background=0;
+    int background=0;
     char *file;
     pid_t pid;
     for(i=0;i<argcount;i++)
@@ -107,6 +109,23 @@ void do_cmd(int argcount,char analycmd[][256])
         arg[i]=analycmd[i];
     }
     arg[argcount]=NULL;
+    for(i=0;i<argcount;i++)
+    {
+        if(strncmp(arg[i],"&",1)==0)
+        {
+            if(i==argcount-1)
+            {
+                background=1;
+                arg[argcount-1]=NULL;
+                break;
+            }
+            else
+            {
+                printf("wrong command!!\n");
+                return ;
+            }
+        }
+    }
     if(strcmp(arg[0],"cd")==0)
     {
         chdir(arg[1]);
@@ -288,6 +307,11 @@ void do_cmd(int argcount,char analycmd[][256])
         break;                      */                    
     default :
         break;
+    }
+    if(background==1)
+    {
+        printf("process id %d\n",pid);
+        return ;
     }
     if(waitpid(pid,&status,0)==-1)
     {
