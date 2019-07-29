@@ -17,15 +17,11 @@
 #define out_add_redirect 4   //输出重定向(追加)
 #define in_add_redirect  5   //输入重定向(追加)
 #define have_pipe        3   //命令中有管道
-#define FILE_NAME       "/temp/youdonotknowf" //文件
+//#define FILE_NAME       "/temp/youdonotknowf" //文件
 #define HOME "/home/zzy"     //起始目录
 
 //颜色
-#define PRINT_RED(s)    printf("\033[0;31m%s\033[0;39m",s);
-#define PRINT_GREEN(s)    printf("\033[0;32m%s\033[0;39m",s);
-#define PRINT_YELLOW(s)    printf("\033[0;33m%s\033[0;39m",s);
 #define PRINT_BULE(s)    printf("\033[0;34m%s\033[0;39m",s);
-#define PRINT_PURPLE(s)    printf("\033[0;35m%s\033[0;39m",s);/*紫色*/
 
 
 void print_prompt();                            //打印提示符
@@ -36,7 +32,7 @@ int find_command(char *);                       //查找命令中的可执行程
 void cd_fun(char *arg[],int count);             //cd命令实现
 
 char start_pathname[PATH_MAX] = HOME;   //最开始起始目录家目录
-char cd_pathname[PATH_MAX];
+char cd_pathname[PATH_MAX];             //当前目录
 
 int main(int argc,char **argv){
     
@@ -100,7 +96,7 @@ void print_prompt(){
      PRINT_BULE(":");
      getcwd(pathname,500);
 
-     if(strncmp(pathname,start_pathname,9) != 0){     // 判断是不是家目录
+     if(strncmp(pathname,start_pathname,9) != 0){     // 判断是不是家目录自(定义的)
         printf("%s",pathname);
         return;
      }
@@ -125,13 +121,13 @@ void print_prompt(){
      strcpy(pathname,"~");
      strcat(pathname,pathname_t);
      PRINT_BULE(pathname);
-
      if(uid == 0){
          PRINT_BULE("#");
      }
      else{
          PRINT_BULE("$");
      }
+     PRINT_BULE(" ");
      
      return;
 }
@@ -148,7 +144,7 @@ void get_input(char *buf){   //  获取用户输入
     strcpy(buf,str);
     buf[strlen(buf)] = '\n';
     
-    /*常规
+    /*常规获取输入（但没有代码补全，上下键切换命令等功能）
     int len = 0;
     int ch;
 
@@ -164,7 +160,12 @@ void get_input(char *buf){   //  获取用户输入
         exit(-1);
     }
 
-    buf[len] = '\n';
+    buf[len] = '\n';          if((dp = opendir(path[i])) == NULL)
+              printf("Can not open /bin!\n");
+          while((dirp = readdir(dp)) != NULL){
+              if(strcmp(dirp->d_name,command) == 0){
+                  closedir(dp);
+
     len++;
     buf[len] = '\0';*/
 }
@@ -185,10 +186,12 @@ void explain_input(char *buf,int *argcount,char arglist[100][256]){
         else{
             q = p;
             number = 0;
+            
             while((q[0] != ' ') && (q[0] != '\n')){
                 number++;
                 q++;
             }
+            
             strncpy(arglist[*argcount],p,number+1); //存储多个命令
             arglist[*argcount][number] = '\0';
             *argcount = *argcount + 1;
@@ -212,6 +215,7 @@ int find_command(char *command){
     while(path[i] != NULL){
         if((dp = opendir(path[i])) == NULL)
             printf("Can not open /bin!\n");
+        
         while((dirp = readdir(dp)) != NULL){
             if(strcmp(dirp->d_name,command) == 0){
                 closedir(dp);
@@ -226,21 +230,22 @@ int find_command(char *command){
 }
 
 
-void cd_fun(char *arg[],int count){
-    getcwd(cd_pathname,100);
-          if((count == 1) || strcmp(arg[1],"~") == 0){
-              strcpy(start_pathname,cd_pathname);
-              chdir(HOME);
-          }
-          else if(strcmp(arg[1],"-") == 0){
-              printf("%s\n",start_pathname);
-              chdir(start_pathname);
-              strcpy(start_pathname,cd_pathname);
-          }
-          else{
-              strcpy(start_pathname,cd_pathname);
-              chdir(arg[1]);
-          }
+void cd_fun(char *arg[],int count){		//arg[]是已经解析过的命令，count是命令数目
+            getcwd(cd_pathname,100);		//获取当前目录
+            
+            if((count == 1) || strcmp(arg[1],"~") == 0){
+                strcpy(start_pathname,cd_pathname); //将当前目录复制为上一级工作目录
+                chdir(HOME);//切换到已经宏定义的家目录
+            }
+            else if(strcmp(arg[1],"-") == 0){	//返回上次的工作目录
+                printf("%s\n",start_pathname);	//打印上一级工作目录
+                chdir(start_pathname);
+                strcpy(start_pathname,cd_pathname);
+            }
+            else{//切换至下一级目录
+                strcpy(start_pathname,cd_pathname);
+                chdir(arg[1]);
+            }
 
 }
 
@@ -260,13 +265,18 @@ void do_cmd(int argcount,char arglist[100][256]){
     for(i = 0;i < argcount;i++){    //取出命令
         arg[i] = (char *)arglist[i];
     }
-    arg[argcount] = NULL;
+
+    //ls 着色
+    if(strcmp(arg[0],"ls") == 0){
+          arg[argcount] = "--color=auto";
+          arg[argcount+1] = NULL;
+      } 
+    else
+        arg[argcount] = NULL;
     
     if(strcmp(arg[0],"cd") == 0){   //cd命令
         cd_fun(arg,argcount);
     }
-
-
 
     for(i = 0;i < argcount;i++){    //查看是否存在后台运行符
         if(strncmp(arg[i],"&",1) == 0){
@@ -326,6 +336,7 @@ void do_cmd(int argcount,char arglist[100][256]){
             printf("wrong command!\n");
             return;
         }
+
         if(how == out_redirect){ //命令只含有一个输出重定向符号 ">"
             for(i = 0;arg[i] != NULL;i++){
                 if(strcmp(arg[i],">") == 0){
@@ -342,7 +353,7 @@ void do_cmd(int argcount,char arglist[100][256]){
                   }                                                                                                                                           
               }   
         }
-        if(how == out_add_redirect){
+        if(how == out_add_redirect){//命令只含有一个追加输入重定向符号 ">" 
 		    for(i = 0;arg[i] != NULL;i++){
 			    if(strcmp(arg[i],">>") == 0){
 				    file = arg[i+1];
@@ -350,7 +361,7 @@ void do_cmd(int argcount,char arglist[100][256]){
 				}
 		    }
 	    } 
-        if(how == in_add_redirect){
+        if(how == in_add_redirect){//命令只含有一个追加输入重定向符号 "<<" 
 		    for(i = 0;arg[i] != NULL;i++){
 			    if(strcmp(arg[i],"<<") == 0){
 				    file = arg[i+1];
@@ -363,14 +374,22 @@ void do_cmd(int argcount,char arglist[100][256]){
                 if(strcmp(arg[i],"|") == 0){
                     arg[i] = NULL;
                     int j;
+                    /* for(int s = i+1;arg[s] != NULL;s++) */
+                        /* printf("\n--%s--\n",arg[s]); */
                     for(j = i+1;arg[i] != NULL;j++){
                         argnext[j-i-1] = arg[j];
                     }
+                    argnext[0] = arg[i+1];
                     argnext[j-i-1] = arg[j];
+                    argnext[1] = NULL;
                     break;
                 }
             }
+            /* for(int s = 0;argnext[s] != NULL;s++) */
+                /* printf("\n++%s++\n",argnext[s]); */
         }
+        
+        //创建一个进程
         if((pid = fork()) < 0){
             printf("fork error!\n");
             return;
@@ -387,7 +406,7 @@ void do_cmd(int argcount,char arglist[100][256]){
                         printf("%s command not found!\n",arg[0]);
                         exit(0);
                     }
-                    execvp(arg[0],arg);
+                    execvp(arg[0],arg); //执行命令行中的命令
                     exit(0);
                 }
                 break;
@@ -406,8 +425,7 @@ void do_cmd(int argcount,char arglist[100][256]){
                   }
                   break;
             case 2:
-            //case 4:
-                  //输入命令含有输出重定向符<
+                //输入命令含有输出重定向符<
                 if(pid == 0){
                         if(!(find_command(arg[0]))){
                             printf("%s command not found!\n",arg[0]);
@@ -420,7 +438,7 @@ void do_cmd(int argcount,char arglist[100][256]){
                     }
                     break;
             case 3:
-                    //输入命令含有管道符|
+                //输入命令含有管道符|
                 if(pid == 0){
                         int pid2;
                         int status2;
@@ -435,7 +453,8 @@ void do_cmd(int argcount,char arglist[100][256]){
                                 printf("%s : command not fount!\n",arg[0]);
                                 exit(0);
                             }
-                            fd2 = open("FILE_NAME",O_WRONLY | O_CREAT | O_TRUNC,0644);
+                        //这里一定要打开的是/tmp下的文件，不然管道符后面的命令无法找到文件！！！
+                            fd2 = open("/tmp/youdonotknowf",O_WRONLY | O_CREAT | O_TRUNC,0644);
                             dup2(fd2,1);
                             execvp(arg[0],arg);
                             exit(0);
@@ -448,16 +467,17 @@ void do_cmd(int argcount,char arglist[100][256]){
                             printf("%s : command not found!\n",argnext[0]);
                             exit(0);
                         }
-                        fd2 = open(FILE_NAME,O_RDONLY);
+                        fd2 = open("/tmp/youdonotknowf",O_RDONLY);
                         dup2(fd2,0);
                         execvp(argnext[0],argnext);
 
-                        if(remove(FILE_NAME))
+                        if(remove("/tmp/youdonotknowf"))
                             printf("remove error!\n");
                         exit(0);
                 }
                 break;
             case 4:
+                //追加输出重定向
                 if(pid == 0){
                     if(pid == 0){
                         if(!(find_command(arg[0]))){
@@ -487,5 +507,6 @@ void do_cmd(int argcount,char arglist[100][256]){
         }
 
     }
+
 
 
