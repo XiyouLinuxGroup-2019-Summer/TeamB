@@ -21,8 +21,8 @@ int main()
 
         std::sort(times,times+n,cmp);
 
-        int count = 1;
-        int end = times[0].t_end;
+        int count = 0;
+        int end = 0;
         for(int i = 0;i < n;i++){
             if(times[i].t_start >= end){ 
                 end = times[i].t_end;
