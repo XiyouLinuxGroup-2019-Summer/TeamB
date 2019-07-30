@@ -20,7 +20,9 @@ int main(){
     
         if(ans >= sum){
             high = mid - 1;
+            //保存答案，重点！！！！！！！！
             min = mid;
+            //---------------
         }
         if(ans < sum){
             low = mid + 1;
