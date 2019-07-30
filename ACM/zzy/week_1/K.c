@@ -1,12 +1,13 @@
+#include<stdio.h>
 #include<iostream>
 char s[200005],t[200005];
 using namespace std;
 int main()
 {
     int n,i=0,j=1,k=0;
-        cin>>n;
-    for(i=0;i<n;i++)
-        cin>>s[i];
+    scanf("%d",&n); 
+    /* for(i=0;i<n;i++) */
+        scanf("%s",s);
     i=0;
     while(j<n)
     {
@@ -22,8 +23,8 @@ int main()
         else
             j++;
     }
-    cout<<n-k<<endl;
+    printf("%d\n",n-k);
     for(i=0;i<k;i++)
-        cout<<t[i];
+        printf("%c",t[i]);
     return 0;
 }
