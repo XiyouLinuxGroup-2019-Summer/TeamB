@@ -4,14 +4,13 @@
 #include<string.h>
 #include<pthread.h>
 #include<unistd.h>
-pthread_key_t key;
+pthread_key_t key;  //定义全局变量key
 
 void *thread2(void *arg){
     int tsd = 5;
     printf("thread %lu is running!\n",pthread_self());
-    pthread_setspecific(key,(void*)tsd);    //将 tsd 和 key 相关联
-    printf("thread %lu returns %p \n",pthread_self(),pthread_getspecific(key));
-    //return NULL;
+    pthread_setspecific(key,(void *)tsd);    //将 tsd 和 key 相关联
+    printf("thread %lu returns %d \n",pthread_self(),pthread_getspecific(key));
 }
 
 void *thread1(void *arg){
@@ -22,7 +21,7 @@ void *thread1(void *arg){
     pthread_setspecific(key,(void *)tsd);   //将 tsd 和 key 相关联
     pthread_create(&thid2,NULL,thread2,NULL);
     sleep(2);
-    printf("thread %lu returns %p\n",pthread_self(),pthread_getspecific(key));
+    printf("thread %lu returns %d\n",pthread_self(),pthread_getspecific(key));
 }
 
 int main(){
