@@ -7,14 +7,17 @@ int dfs(int j,int ci,int zhong){
         return dp[j];
     }
     cci[j] = 1;
+    dp[j] = -(1<<30); 
     if(ci == 0){
-        for(int i = zhong+1;j < n;i++){
-            dp[j] = max(dp[j],dfs(n,1,i)+a1[j]);
+        for(int i = 1;j < n;i++){
+            if(j >= a1[i])
+                dp[j] = max(dp[j],dfs(n,1,i)+a1[j]);
         }
     }
     else if(ci == 1){
-        for(int i = zhong+1;j < n;i++){
-            dp[j] = max(dp[j],dfs(n,0,i)+a2[j]);
+        for(int i = 1;j < n;i++){
+            if(j >= a2[i])
+                dp[j] = max(dp[j],dfs(n,0,i)+a2[j]);
         }
     }
     return dp[j];
