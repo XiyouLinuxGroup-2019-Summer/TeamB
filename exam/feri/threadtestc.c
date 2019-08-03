@@ -19,10 +19,10 @@ void *func()
 }
 int main()
 {
-        int i;
+        int i,o=0;
         pthread_t tid;
-        pthread_create(&tid, NULL, func, NULL);
         for(;;){
+                pthread_create(&tid, NULL, func, NULL);
                 pthread_mutex_lock(&mtx);
                 while(produce[0]==0){
                         pthread_cond_wait(&cond, &mtx);
@@ -30,6 +30,7 @@ int main()
                 while(produce[0] != 0){
                     for(i = 0; i<1000; i++){
                         if(produce[i] == 1){
+                                printf("%d\n",o++);
                                 produce[i] = 0;
                         }
                     }
