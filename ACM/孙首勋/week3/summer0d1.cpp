@@ -1,5 +1,5 @@
 #include <bits/stdc++.h>
-
+ 
 using namespace std;
 int main(){
     int k,n;
@@ -9,8 +9,7 @@ int main(){
     map<int,string> mp;
     string a = "A";
     string a1 = "Aa";
-
-
+ 
     for(int i = 0;i < 2;i++){
         for(int j = 0;j < 26;j++){
             if(i == 0){
@@ -23,36 +22,35 @@ int main(){
             }
         }
     }
-
+ 
     int cnt = 0;
-    for(int i = 0;i < k-n+1;i++){
+    q.push_back("xx");
+    for(int i = 1;i <= k-n+1;i++){
         cin>>a;
         q.push_back(a);
     }
-
-    mp[0] = "A";
-
-    for(int i = 0;i < k-n+1;i++){
-        if(q[i] == "YES"){
-            for(int j = i+1;j <= i+n;j++){
-                if(mp.count(j)==0)
-                    mp[j] = name[cnt++];        
-            }
-        }
+ 
+    for(int i = 1;i <= n-1;i++){
+        cout<<name[cnt]<<' ';
+        mp[i] = name[cnt];
+        cnt++;
     }
 
-    for(int i = 1;i <= k;i++){
-        if(mp.count(i) == 0){
-            mp[i] = mp[i-1];
+    
+ 
+    for(int i = 1;i <= k+1-n;i++){
+        /* cout<<q[i]<<"=q[i]"<<'\n'; */
+        if(q[i] == "YES"){
+            cout<<name[cnt]<<' ';
+            mp[i+n-1] = name[cnt];
+            cnt++;
         }
         else if(q[i] == "NO"){
-            mp[i-1] = mp[i];
+            /* cout<<"dasdasd"<<'\n'; */
+            cout<<mp[i]<<' ';
+            mp[i+n-1] = mp[i];
         }
     }
-
-    for(int i = 1;i <= k;i++)
-        cout<<mp[i]<<" ";
-
+ 
     return 0;
 }
-
