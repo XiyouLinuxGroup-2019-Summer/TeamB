@@ -15,7 +15,7 @@ void *add(void *arg){
             a[i] = 1;
             printf("%d goods has been add!\n",i);
         }
-        if(i == 99)
+        while(i == 99)
             i = 0;
         usleep(1);
         pthread_cond_signal(&cond[0]);
