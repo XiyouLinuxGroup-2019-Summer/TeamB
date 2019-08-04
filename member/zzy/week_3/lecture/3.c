@@ -40,6 +40,6 @@ int main(){
         printf("tid 父进程主线程 ID 为 %d\n",gettid());
         pthread_create(&tid2,NULL,f,(void *)&a);
     }
-    pthread_join(tid1,(void*)retval_1);
-    pthread_join(tid2,(void*)retval_2);
+    pthread_join(tid1,(void**)&retval_1);
+    pthread_join(tid2,(void**)&retval_2);
 }
