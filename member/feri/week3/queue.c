@@ -1,6 +1,8 @@
 #include "queue.h"
 
+#include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 typedef struct Node {
         void *data;
@@ -26,12 +28,13 @@ void Queuepush(Queue *queue, void *data)
 {
         Node *node = (Node *)malloc(sizeof(Node));
         node->data = data;
-        if (queue->tail) {
+        if (queue->tail != NULL) {
             queue->tail->next = node;
             queue->tail = node;
+        queue->size++;
         }else {
             queue->head = queue->tail = node;
-            queue->size++;
+        queue->size++;
         }
 }
 
@@ -44,16 +47,15 @@ void *Queuepop(Queue *queue)
                 free(queue->head);
                 queue->head = queue->tail = NULL;
                 queue->size--;
-        } else {
+        }else if (queue->size > 1){
                 data = queue->head->data;
                 tmp = queue->head;
                 queue->head = queue->head->next;
                 free(tmp);
                 queue->size--;
         }
-        return data; 
-}
-
+        return data;
+}                                    
 void Queuedestory(Queue *queue,void (*datadestory)(void *))
 {
         Node *node = queue->head;
