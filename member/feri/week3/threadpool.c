@@ -31,7 +31,7 @@ void *threadstart(void *args){
                 if(task && task->callback){
                         task->callback(task->args);
                         free(task);
-                }
+                } 
         }
         return NULL;
 }
