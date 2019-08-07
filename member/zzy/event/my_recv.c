@@ -35,10 +35,11 @@ int my_recv(int conn_fd,char *data_buf,int len){
         }
         pread = recv_buf;   //重新初始化 pread 指针
     }
-
+    
     //从自定义的缓冲区中读取一次数据
     for(i = 0;*pread != '\n';i++){      //读取以‘\n’作为结束
         if(i > len){    //防止指针越界
+            printf("i = %d pread = %s\n",i,pread);
             return -1;
         }
         data_buf[i] = *pread++;
