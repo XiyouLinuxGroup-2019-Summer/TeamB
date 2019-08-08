@@ -18,7 +18,7 @@ int main(){
     struct timeval timeout;
     int ret;
 
-    //监视文件描述符 0 是否有数据输入，文件描述符 0 表示标准输入，几键盘输入
+    //监视文件描述符 0 是否有数据输入，文件描述符 0 表示标准输入，即键盘输入
     FD_ZERO(&readfds);  //刚开始使用一个文件描述符集合前一般要将其清空
     FD_SET(0,&readfds);
 
