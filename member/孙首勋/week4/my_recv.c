@@ -1,4 +1,4 @@
-#define MY_RECV_C
+/* #define MY_RECV_C
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include "my_recv.h"
 #include <stdlib.h>
+#include "all.h"
 //自定义错误处理函数
 
 void my_err(const char * err_string,int line){
@@ -24,8 +25,9 @@ void my_err(const char * err_string,int line){
  *  返回值：出错返回-1，服务器端已关闭链接则返回0，成功返回读取自接数
  *
  **/
-int my_recv(int conn_fd,char *data_buf,int len){
-    static char recv_buf[BUFSIZE];//自定义缓冲区，bufsize定义在my——recv.h
+/*int my_recv(int conn_fd,PACK *recvdata,int len){
+
+
     static char *pread; //指向下一次读取数据的位置
     static int len_remain = 0;
     int i;
@@ -33,14 +35,14 @@ int my_recv(int conn_fd,char *data_buf,int len){
     //如果自定义缓冲区没有数据，则从套接字中读取数据
     
     if(len_remain <= 0){
-        if((len_remain = recv(conn_fd,recv_buf,sizeof(recv_buf),0)) < 0){
+        if((len_remain = recv(conn_fd,recvdata,sizeof(recvdata),0)) < 0){
             my_err("recv",__LINE__);
         }
         else if(len_remain == 0){
             return 0;
         }
 
-        pread = recv_buf; //初始化pread指针
+        pread = recvdata->data.mes; //初始化pread指针
     }
 
     //从自定义缓冲区中读取一次数据
@@ -49,7 +51,7 @@ int my_recv(int conn_fd,char *data_buf,int len){
         if(i > len){
             return -1;
         }
-        data_buf[1] = *pread++;
+        recvdata->data.mes = *pread++;
         len_remain--;
     }
 
@@ -60,5 +62,4 @@ int my_recv(int conn_fd,char *data_buf,int len){
     return i;
     //读取成功
 
-}
-
+}*/

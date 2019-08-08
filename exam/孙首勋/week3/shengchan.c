@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 pthread_mutex_t mutex;
+pthread_mutex_t mutex2;
 pthread_cond_t cond;
 
 int count = 0;
@@ -34,7 +35,9 @@ void *b(void *arg){
     
         while(count <= 0){
             pthread_cond_wait(&cond,&mutex);
+            pthread_mutex_lock(&mutex2);
             count--;
+            pthread_mutex_unlock(&mutex2);
         }
         printf("使用资源的线程B\n");
         /* sleep(1); */
@@ -45,6 +48,7 @@ void *b(void *arg){
 int main(){
     pthread_t A,B;
     pthread_mutex_init(&mutex,NULL);
+    pthread_mutex_init(&mutex2,NULL);
     pthread_cond_init(&cond,NULL);
 
     pthread_create(&A,NULL,(void *)a,NULL);
