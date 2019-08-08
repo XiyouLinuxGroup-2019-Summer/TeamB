@@ -23,6 +23,7 @@ share | 学习中遇到的有趣的东西
 summary | 学习总结
 requirement | 项目要求
 ACM | 存放算法题代码<br>每人新建自己的文件夹
+Depended | 学习资料
 
 ------
 

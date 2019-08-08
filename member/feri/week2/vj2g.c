@@ -5,9 +5,9 @@ int main()
     int m,n;
     double maxend=0,maxdivia=0,maxdivib=0,cha,chb;
     scanf("%d %d",&m,&n);
-    double room[n][2];
     while(m!=-1&&n!=-1)
     {
+    double room[n][2];
     maxend=0;
     maxdivia=0;
     maxdivib=0;
