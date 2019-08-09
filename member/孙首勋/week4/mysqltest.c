@@ -1,15 +1,32 @@
 #include <stdio.h>  
 #include <stdlib.h>  
-#include <mysql/mysql.h>  
+#include <mysql/mysql.h>
+#include <string.h>
+#define MAX_CHAR 1024
+
+typedef struct login
+{
+    char username[20];
+    char password[20];
+}login_data;
 int main() {  
+    
+
+    login_data * data1;
+    data1  = (login_data *)malloc(sizeof(login_data));
+
+    strcpy(data1->username,"tt");
     MYSQL conn_ptr;  
     MYSQL_RES *res_ptr;  
     MYSQL_ROW sqlrow;  
     MYSQL_FIELD *fd;  
     int res, i, j;  
 
-
+    char buffer[MAX_CHAR];
+    /* sprintf(buffer,"select password from 用户数据 where `name` = %s",data1->username); */
     /* scanf("%s",); */
+    sprintf(buffer,"select password from 用户数据 where `name` = '%s'",data1->username);
+    /* printf("%s",buffer); */
 
     if (mysql_init(&conn_ptr) == NULL) {  
         return EXIT_FAILURE;  
@@ -24,7 +41,8 @@ int main() {
     }
     if (1) 
     {  
-        res = mysql_query(&conn_ptr, "select * from 用户数据 where `uid` < 2"); //查询语句  
+        /* res = mysql_query(&conn_ptr,"select password from 用户数据 where `name` = 'tt'"); //查询语句 */  
+        res = mysql_query(&conn_ptr,buffer); //查询语句  
         if (res) 
         {         
             printf("SELECT error:%s\n",mysql_error(&conn_ptr));     
@@ -41,8 +59,6 @@ int main() {
                     for(i = 0; i < j; i++)
                         printf("%s\t", sqlrow[i]);              //输出  
                     printf("\n");          
-
-                    
                 }              
                 if (mysql_errno(&conn_ptr)) 
                 {                      

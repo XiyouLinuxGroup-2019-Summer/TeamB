@@ -34,6 +34,7 @@
 #define GROUP_MAX                100
 
 #define BUFSIZE                  1024
+#define PAGE_SIZE                10
 typedef struct datas{
     char     send_name[MAX_CHAR];
     char     recv_name[MAX_CHAR];
@@ -72,9 +73,31 @@ typedef struct infor_user
     char group_num;
 }INFO_USER;
  
- 
 INFO_USER  m_infor_user  [USER_MAX];
 int        m_user_num; 
+
+
+typedef struct login{
+    char username[20];
+    char password[20];
+}login_data;
+
+
+typedef struct prinit_mes{
+    char name[MAX_CHAR];
+    char time[MAX_CHAR];
+    char mes [MAX_CHAR];
+    
+}PRINT_MES;
+
+
+typedef struct  friend_info{
+    int statu;
+    int mes_num;
+    char name[MAX_CHAR];
+}FRIEND_INFO; 
+
+
 
 
 #endif
