@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include "list.h"
+#include "md5.h"
 
 #define INVALID_USERINFO   'n' //用户信息无效
 #define VALID_USERINFO     'y' //用户信息有效
@@ -18,15 +19,14 @@
 void watchfrilist();   //查看好友列表
 void watchgrouplist();  //查看群组列表
 void login(int conn_fd);
-void zhuce(int conn_fd);
 void UI_zhuce(int conn_fd);
 void UI_loginin(int conn_fd);
 void UI_user(int conn_fd);
 int get_userinfo(char *mes,int len);
 void input_userinfo(int conn_fd,const PACK *senddata);
 void recive(int conn_fd,const PACK *recvdata);
-void changepassword(conn_fd);
-void findpassword(conn_fd);
+void changepassword(int conn_fd);
+void findpassword(int conn_fd);
 
 
 //void init();
@@ -99,13 +99,13 @@ void watchfrilist(){
 
 
 	/*int i,id;
-	char choice;
+	int choice;
 
-	FRIEND_INFO *head;
-	FRIEND_INFO *pos;
+	infouser_list_t head;
+	infouser_node_t *pos;
 	Pagination_t paging;
 
-	List_Init(head,FRIEND_INFO);
+	List_Init(head,infouser_node_t);
 	paging.offset = 0;
 	paging.pageSize = PAGE_SIZE;
 
@@ -122,8 +122,8 @@ void watchfrilist(){
 		printf( "%20s %20s\n","姓名","在线状态");
 		printf( "------------------------------------------------\n");
 
-		Paging_ViewPage_ForEach(head,paging,play_node_t,pos,i){
-			printf( "%20s %20s\n",pos->data.name,pos->data.type);	
+		Paging_ViewPage_ForEach(head,paging,infouser_node_t,pos,i){
+			printf( "%20s %20s\n",pos->data.username,pos->data.statu);	
 		}
 	
 		printf("--------Total Recoeds: %2d--Page %2d  %2d--------\n",paging.totalRecords,Pageing_CurPage(paging),Pageing_TotalPages(paging));
@@ -132,66 +132,64 @@ void watchfrilist(){
 
 		printf("[1]上页|[2]下页|[3]添加用户|[4]删除用户|[5]获取更新|[6]选择私聊|[7]返回");
 		printf("\n==============================================================\n");
-		setbuf(stdin,NULL);
 		printf( "your choice: ");
-		scanf( "%c",&choice);
-		getchar( );
-		setbuf(stdin,NULL);
+		scanf( "%d",&choice);
+
 		switch(choice)
 		{
 			case'3':
-				setbuf(stdin,NULL);
+
 				if(Play_UI_Add())
 				{
 					paging.totalRecords = Play_Srv_FetchAll(head);
-					Paging_Locate_LastPage(head,paging,play_node_t);
+					Paging_Locate_LastPage(head,paging,infouser_node_t);
 				}
 				break;
 			case'4':
-				setbuf(stdin,NULL);
+
 				printf("Play_ID:");
 				scanf( "%d",&id);
 				getchar( );
 				if(Play_UI_Delete(id))
 				{
 					paging.totalRecords = Play_Srv_FetchAll(head);
-					List_Paging(head,paging,play_node_t);
+					List_Paging(head,paging,infouser_node_t);
 				}
 				break;
 			case'5':
-				setbuf(stdin,NULL);
+
 				printf("Play_ID:");
 				scanf("%d",&id);
 				getchar( );
 				if(Play_UI_Modify(id))
 				{
 					paging.totalRecords = Play_Srv_FetchAll(head);
-					List_Paging(head,paging,play_node_t);
+					List_Paging(head,paging,infouser_node_t);
 				}
 				break;
 			case'6':
-				setbuf(stdin,NULL);
+
 				printf( "Play_ID:");
 				scanf( "%d",&id);
 				getchar( );
 				if(Play_UI_Query(id))
 				{
 					paging.totalRecords = Play_Srv_FetchAll(head);
-					List_Paging(head,paging,play_node_t);
+					List_Paging(head,paging,infouser_node_t);
 				}
 				break;
 			case'1':
-				setbuf(stdin,NULL);
+
 				if (!Pageing_IsFirstPage(paging)) 
 				{
-					Paging_Locate_OffsetPage(head, paging, -1, play_node_t);
+					Paging_Locate_OffsetPage(head, paging, -1,infouser_node_t);
 				}
 				break;
 			case'2':
-				setbuf(stdin,NULL);
+
 				if (!Pageing_IsLastPage(paging)) 
 				{
-					Paging_Locate_OffsetPage(head, paging, 1, play_node_t);
+					Paging_Locate_OffsetPage(head, paging, 1,infouser_node_t);
 				}
 				break;
 			}
@@ -202,13 +200,13 @@ void watchfrilist(){
 
 void watchgrouplist(){
 	/*int i,id;
-	char choice;
+	int choice;
 
-	FRIEND_INFO *head;
-	FRIEND_INFO *pos;
+	infogroup_list_t head;
+	infogroup_node_t *pos;
 	Pagination_t paging;
 
-	List_Init(head,FRIEND_INFO);
+	List_Init(head,infogroup_node_t);
 	paging.offset = 0;
 	paging.pageSize = PAGE_SIZE;
 
@@ -220,28 +218,25 @@ void watchgrouplist(){
 		printf(
 				"\n=============================================\n");
 		printf(
-				"************* Projection Play List ************\n");
+				"******************** 群信息 ********************\n");
 
-		printf( "%20s %15s %15s\n","群名","群总人数","群在线人数");
+		printf( "%20s %15s %15s\n","群名","群总人数","群主");
 		printf( "---------------------------------------------------\n");
 
-		Paging_ViewPage_ForEach(head,paging,play_node_t,pos,i)
+		Paging_ViewPage_ForEach(head,paging,infogroup_node_t,pos,i)
 		{
-			printf( "%20s %15s %15s\n",pos->data.name,pos->data.price,pos->data.);	
+			printf( "%20s %15s %15s\n",pos->data.group_name,pos->data.member_num,pos->data.member_name);	
 		}
 	
 
-		printf( "---Total Recoeds: %2d----Page %2d   %2d -----\n",paging.totalRecords,Pageing_CurPage(paging),Pageing_TotalPages(paging));
+		printf( "---Total Recoeds: %2d----Page %2d   %2d ---\n",paging.totalRecords,Pageing_CurPage(paging),Pageing_TotalPages(paging));
 	
 		printf("*************************************************\n");
 
 		printf("[1]上页 | [2]下页 | [3]添加群组 | [4]解散群 |[5]获取更新 | [6]选择群聊 | [7]退出");
 		printf( "\n=======================================================================================\n");
-		setbuf(stdin,NULL);
 		printf( "your choice: ");
-		scanf( "%c",&choice);
-		getchar( );
-		setbuf(stdin,NULL);
+		scanf( "%d",&choice);
 		switch(choice)
 		{
 			case'3':
@@ -249,7 +244,7 @@ void watchgrouplist(){
 				if(Play_UI_Add())
 				{
 					paging.totalRecords = Play_Srv_FetchAll(head);
-					Paging_Locate_LastPage(head,paging,play_node_t);
+					Paging_Locate_LastPage(head,paging,infogroup_node_t);
 				}
 				break;
 			case'4':
@@ -260,7 +255,7 @@ void watchgrouplist(){
 				if(Play_UI_Delete(id))
 				{
 					paging.totalRecords = Play_Srv_FetchAll(head);
-					List_Paging(head,paging,play_node_t);
+					List_Paging(head,paging,infogroup_node_t);
 				}
 				break;
 			case'5':
@@ -271,7 +266,7 @@ void watchgrouplist(){
 				if(Play_UI_Modify(id))
 				{
 					paging.totalRecords = Play_Srv_FetchAll(head);
-					List_Paging(head,paging,play_node_t);
+					List_Paging(head,paging,infogroup_node_t);
 				}
 				break;
 			case'6':
@@ -282,21 +277,21 @@ void watchgrouplist(){
 				if(Play_UI_Query(id))
 				{
 					paging.totalRecords = Play_Srv_FetchAll(head);
-					List_Paging(head,paging,play_node_t);
+					List_Paging(head,paging,infogroup_node_t);
 				}
 				break;
 			case'1':
 				setbuf(stdin,NULL);
 				if (!Pageing_IsFirstPage(paging)) 
 				{
-					Paging_Locate_OffsetPage(head, paging, -1, play_node_t);
+					Paging_Locate_OffsetPage(head, paging, -1,infogroup_node_t);
 				}
 				break;
 			case'2':
 				setbuf(stdin,NULL);
 				if (!Pageing_IsLastPage(paging)) 
 				{
-					Paging_Locate_OffsetPage(head, paging, 1, play_node_t);
+					Paging_Locate_OffsetPage(head, paging, 1,infogroup_node_t);
 				}
 				break;
 			}
@@ -395,9 +390,8 @@ void UI_loginin(int conn_fd){
 		printf("*********** xunchat ************\n");
 		printf("[1]  登录\n");
 		printf("[2]  注册\n");
-		printf("[3]  修改密码\n");
-		printf("[4]  找回密码\n");
-		printf("[5]  退出\n");
+		printf("[3]  找回密码\n");
+		printf("[4]  退出\n");
 
 		printf("\n==============================\n");
 		printf("请输出你的选择：");
@@ -408,19 +402,14 @@ void UI_loginin(int conn_fd){
 			login(conn_fd);
 			break;
 		case 2:
-			zhuce(conn_fd);
+			UI_zhuce(conn_fd);
 			break;
 		case 3:
-			changepassword(conn_fd);
+			findpassword(conn_fd);
 			break;
-		case 4:
-			//zhuce(conn_fd);
-		break;
-			//case 2:
-			//zhuce(conn_fd);
-			//break;
+
 		}
-	} while (5 != choice && 5 != choice);
+	} while (4 != choice);
 }
 
 
@@ -463,7 +452,7 @@ void UI_zhuce(int conn_fd){
 
 }
 
-void UI_user(conn_fd){
+void UI_user(int conn_fd){
 	int choice;
 	do{
 		system("clear");
@@ -471,31 +460,46 @@ void UI_user(conn_fd){
 		printf("******** xunchat ********\n");
 		printf("【1】查看好友列表\n");
 		printf("【2】查看群列表\n");
-		printf("【3】退出登录\n");
+		printf("【3】修改密码\n");
+		printf("【4】退出登录\n");
 		printf("\n=======================\n");
 		printf("请输出你的选择：");
 		scanf("%d",choice);
 		switch (choice){
-		setbug(stdin,NULL);
 		case 1:
-			//watchfrilist();
+			watchfrilist();
 			break;
 		case 2:
-			//watchgrouplist();
+			watchgrouplist();
+			break;
+		case 3:
+			changepassword(conn_fd);
 			break;
 		}
 		
-	} while (3 != choice);
+	} while (4 != choice);
 
 	close(conn_fd);
-	return 0;
+	return ;
 }
 
 
-void changepassword(conn_fd){
+void changepassword(int conn_fd){
+	
+	printf("请输入新密码");
+
+	while(1)
+	{
+		printf( "请重新输入新密码:");
+	
+		//if(strcmp() == 0)	break;
+	}
+
 
 }
 
-void findpassword(conn_fd){
-
+void findpassword(int conn_fd){
+	printf( "****** 找回密码 *******\n");
+	printf( "请输入账号:");
+	printf( "请输入预留手机号:");
 }

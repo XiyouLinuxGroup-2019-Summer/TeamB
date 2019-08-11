@@ -25,6 +25,7 @@ int main() {
     char buffer[MAX_CHAR];
     /* sprintf(buffer,"select password from 用户数据 where `name` = %s",data1->username); */
     /* scanf("%s",); */
+    
     sprintf(buffer,"select password from 用户数据 where `name` = '%s'",data1->username);
     /* printf("%s",buffer); */
 

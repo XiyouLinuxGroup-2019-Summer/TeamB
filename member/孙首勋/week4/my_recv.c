@@ -10,6 +10,7 @@
 #include "all.h"
 //自定义错误处理函数
 
+
 void my_err(const char * err_string,int line){
     fprintf(stderr,"line:%d ",line);
     perror(err_string);
@@ -79,7 +80,7 @@ int my_recvlogin(PACK *data2,login_data *data1,int len){
     //读取成功
 }
 
-int my_recvlogin(PACK *data2,INFO_USER *data1,int len){
+int my_recvregister(PACK *data2,info_user *data1,int len){
     
     static char *pread; //指向下一次读取数据的位置
     pread = data2->data.mes; //初始化pread指针

@@ -1,8 +1,7 @@
 #ifndef __MY_CLIENT_H
 #define __MY_CLIENT_H
 
-#define MAX_CHAR 1024
-
+#define MAX_CHAR                 1024
 #define LOGIN                    1
 #define REGISTER                 2
 #define FRI_CHA                  3
@@ -28,6 +27,8 @@
 #define MES_RECORD               23
 #define GROUP_KICK               24
 #define GROUP_SET                25
+#define FRI_SEE                  26
+
 
 #define EXIT                     -1
 #define USER_MAX                 100
@@ -50,18 +51,22 @@ typedef struct package{
 }PACK;
 
 
-typedef struct infor_group
+typedef struct info_group
 {
     char  group_name[MAX_CHAR];
     int   member_num;
     char  member_name[USER_MAX][MAX_CHAR];  //begin from 1
-}INFO_GROUP;
+}info_group;
  
-INFO_GROUP   m_infor_group  [GROUP_MAX]; //begin from 1
-int          m_group_num;
+typedef struct infogroup_node
+{
+    info_group data;
+	struct infogroup_node *next;
+	struct infogroup_node *prev;
+}infogroup_node_t,*infogroup_list_t;
 
 
-typedef struct infor_user 
+typedef struct info_user 
 {
     char username[MAX_CHAR];
     unsigned int password[4];
@@ -71,10 +76,18 @@ typedef struct infor_user
     int  friends_num;
     char group[GROUP_MAX][MAX_CHAR];  //begin from 1
     char group_num;
-}INFO_USER;
- 
-INFO_USER  m_infor_user  [USER_MAX];
-int        m_user_num; 
+    char sex[3];
+    char mibao[100];
+}info_user;
+
+
+typedef struct infouser_node
+{
+    info_user data;
+	struct infouser_node *next;
+	struct infouser_node *prev;
+}infouser_node_t,*infouser_list_t;
+
 
 
 typedef struct login{
@@ -96,8 +109,5 @@ typedef struct  friend_info{
     int mes_num;
     char name[MAX_CHAR];
 }FRIEND_INFO; 
-
-
-
 
 #endif
