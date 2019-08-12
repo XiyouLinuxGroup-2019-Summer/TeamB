@@ -16,6 +16,7 @@ int main() {
     data1  = (login_data *)malloc(sizeof(login_data));
 
     strcpy(data1->username,"tt");
+    strcpy(data1->password,"123456");
     MYSQL conn_ptr;  
     MYSQL_RES *res_ptr;  
     MYSQL_ROW sqlrow;  
@@ -26,8 +27,8 @@ int main() {
     /* sprintf(buffer,"select password from 用户数据 where `name` = %s",data1->username); */
     /* scanf("%s",); */
     
-    sprintf(buffer,"select password from 用户数据 where `name` = '%s'",data1->username);
-    /* printf("%s",buffer); */
+    sprintf(buffer,"select password from 用户数据 where password = '%s' and name = '%s'",data1->password,data1->username);
+    /* printf("%s",data1->password); */
 
     if (mysql_init(&conn_ptr) == NULL) {  
         return EXIT_FAILURE;  
@@ -53,7 +54,7 @@ int main() {
             if(res_ptr) 
             {   
                 //	int num = (unsigned long)mysql_num_rows(res_ptr);
-                printf("%lu Rows\n",(unsigned long)mysql_num_rows(res_ptr));   //返回所有的行
+                printf("%lld Rows\n",mysql_num_rows(res_ptr));   //返回所有的行
                 j = mysql_num_fields(res_ptr);//获取 列数    
                 while((sqlrow = mysql_fetch_row(res_ptr)))  
                 {   //依次取出记录  

@@ -13,6 +13,19 @@
 #include "my_serthread.h"
 #include <pthread.h>
 #include "md5.h"
+#include "list.h"
+
+    int i,id;
+	int choice;
+
+	infouser_list_t head;
+	infouser_node_t * pos;
+
+	//List_Init(head,infouser_node_t);
+    
+
+
+
 
 #define SERV_PORT   4507  //     服务器的端口
 #define LISTENQ 12        //连接请求队列的最大长度
@@ -56,6 +69,8 @@ int main(){
         my_err("setsockopt",__LINE__);
     }
 
+    setsockopt(sock_fd,SOL_SOCKET,SO_KEEPALIVE,(void*)&optval,sizeof(int));
+    memset(&serv_addr,0,sizeof(struct sockaddr_in));
 
     //初始化服务器段地址结构
     memset(&serv_addr,0,sizeof(struct sockaddr_in));
@@ -86,8 +101,7 @@ int main(){
     //将listenfd加入epoll
 
     epoll_ctl(epfd,EPOLL_CTL_ADD,sock_fd,&ev);
-    int nfds = 0,connfd,sockfd;
-
+    int nfds = 0;
 
     while(1)  //通过accept 接受客户端的链接请求,并返回连接套接字用于收发数据
     {
@@ -107,27 +121,27 @@ int main(){
                     struct epoll_event ev;
 
 
-                    connfd = accept(sock_fd,(struct sockaddr *)&cli_addr,&cli_len);//jie shou liang jie
+                    conn_fd = accept(sock_fd,(struct sockaddr *)&cli_addr,&cli_len);//jie shou liang jie
                     
                     
                     if(conn_fd < 0)  my_err("accept",__LINE__);
                     printf("accept a new client,ip: %s \n",inet_ntoa(cli_addr.sin_addr));
 
-                    ev.data.fd = connfd;
+                    ev.data.fd = conn_fd;
                     ev.events = EPOLLIN|EPOLLET;
-                    epoll_ctl(epfd,EPOLL_CTL_ADD,connfd,&ev); //将新的fd添加到epoll的监听队列
+                    epoll_ctl(epfd,EPOLL_CTL_ADD,conn_fd,&ev); //将新的fd添加到epoll的监听队列
 
                 }
                 else if(events[i].events&EPOLLIN){//接收到数据读socket
-
+                    //printf("dsadsadsadadas\n");
                     PACK *recvdata = NULL;
                     recvdata = (PACK *)malloc(sizeof(PACK));
                     int len_remain;
-                    if((len_remain = recv(conn_fd,recvdata,sizeof(PACK),0)) < 0){
+                    if((len_remain = recv(events[i].data.fd,recvdata,sizeof(PACK),0)) < 0){
                         perror("recv");
                         exit(1);
                     }
-
+                    //printf("%s",recvdata->data.mes);
 
                 /*recv_buf.send_fd = events[i].data.fd; //发送者的套接字已经改变 应转换为accept后的套接字
                 recv_t *temp=(recv_t*)malloc(sizeof(recv_t)); //防止多线程访问一个结构体
@@ -135,9 +149,8 @@ int main(){
                 temp->epfd=epfd;
                 temp->conn_fd=events[i].data.fd;
 */
-
-
                     pthread_t tid1;
+                    recvdata->data.recv_fd = events[i].data.fd;
                     pthread_create(&tid1,NULL,(void *)myallthread,recvdata);
 
                     /*if((sockfd = events[i].data.fd) < 0) continue;

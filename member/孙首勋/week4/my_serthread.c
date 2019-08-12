@@ -8,6 +8,10 @@
 #include <stdlib.h>
 #include <mysql/mysql.h>
 
+
+
+
+
 int threadlogin(PACK *pack);
 void userregister(PACK *pack);
 void mysqlinit(MYSQL *mysql);
@@ -24,6 +28,9 @@ void srv_creategroup(PACK *pack);
 void srv_groupkick(PACK *pack);
 void srv_groupsee(PACK *pack);
 void srv_friendsee(PACK *pack);
+void srv_changenum(PACK *pack);
+int close_mysql(MYSQL mysql);
+
 
 void *myallthread(PACK *pack){
 
@@ -83,6 +90,13 @@ void *myallthread(PACK *pack){
         case GROUP_SET:
             break; 
 
+        case CHANGE_NUM:
+            srv_changenum(pack);
+            break;
+        
+        case FIND_PASSWD:
+            srv_findpassword(pack);
+            break;
         default:
             break;
     }
@@ -107,7 +121,6 @@ void mysqlinit(MYSQL *mysql){
         my_err("mysql_real_connect", __LINE__);
     }
     //连接数据库的重要一步：
-
     //设置中文字符集
 	if(mysql_set_character_set(mysql, "utf8") < 0){
 		my_err("mysql_set_character_set", __LINE__);
@@ -118,7 +131,7 @@ void mysqlinit(MYSQL *mysql){
 int threadlogin(PACK *pack){
     
     MYSQL mysql;
-    MYSQL_RES *res_ptr;  
+    MYSQL_RES *res_ptr = NULL;  
     MYSQL_ROW sqlrow;  
     MYSQL_FIELD *fd;  
     int res, i, j;  
@@ -132,60 +145,47 @@ int threadlogin(PACK *pack){
         my_err("myrecvtemp",__LINE__);
     }
 
-    char buffer[20];
-    sprintf(buffer,"select password from 用户数据 where `name` = '%s'",data1->username);
+    char buffer[150];
+    //printf("dasdsadsa %s\n%s\n",data1->username,data1->password);
+    sprintf(buffer,"select password from 用户数据 where `name` = '%s' and `password` = '%s'",data1->username,data1->password);
 
     res = mysql_query(&mysql, buffer); //查询语句  
     if (res){         
         printf("SELECT error:%s\n",mysql_error(&mysql));     
     }
-    else{        
+    else{
         res_ptr = mysql_store_result(&mysql);             //取出结果集  mysql_store_result()立即检索所有的行，
-        if(res_ptr){   
-            //	int num = (unsigned long)mysql_num_rows(res_ptr);
-            printf("%lu Rows\n",(unsigned long)mysql_num_rows(res_ptr));   //返回所有的行
-            j = mysql_num_fields(res_ptr);//获取 列数    
-            while((sqlrow = mysql_fetch_row(res_ptr)))  
-            {   //依次取出记录  
-                for(i = 0; i < j; i++){
-                    printf("%s\t", sqlrow[i]);              //输出  
-                }
-                printf("\n");          
-            }              
-            if (mysql_errno(&mysql)){                      
-                fprintf(stderr,"Retrive error:s\n",mysql_error(&mysql));               
-            }        
-        }        
-        mysql_free_result(res_ptr);        //释放空间
-
-
-        PACK * senddata = NULL;
-		senddata = (PACK *)malloc(sizeof(PACK));
-		senddata->type = LOGIN;
-		senddata->data.recv_fd = pack->data.send_fd;
-		//senddata->data.send_fd = conn_fd;
-		strcmp(senddata->data.send_name,"server");
-		
-
-
-        if(strcmp(sqlrow[1],data1->password) == 0){
-            senddata->data.mes[0] = 'y';
-            if(send(pack->data.send_fd,senddata,sizeof(PACK),0) < 0)
-                my_err("send",__LINE__);
-        }
-        else{
-            senddata->data.mes[0] = 'n';
-            if(send(pack->data.send_fd,senddata,sizeof(PACK),0) < 0)
-                my_err("send",__LINE__);
-        }
         
-    }
-    /*else 
-    {  
-        printf("Connection failed\n");  
-    }  */
+        PACK * senddata = NULL;
+        senddata = (PACK *)malloc(sizeof(PACK));
 
-    mysql_close(&mysql);  
+        if(mysql_num_rows(res_ptr) == 0){
+
+            printf("login error");
+            senddata->type = LOGIN;
+		    senddata->data.recv_fd = pack->data.send_fd;
+            senddata->data.mes[0] = 'n';
+            strcpy(senddata->data.send_name,"server");
+
+            if(send(pack->data.send_fd,senddata,sizeof(PACK),0) < 0)
+                my_err("send",__LINE__);
+        
+        }
+        else if(mysql_num_rows(res_ptr) > 0){
+            
+            printf("登录成功\n");  
+            senddata->type = LOGIN;
+		    senddata->data.recv_fd = pack->data.send_fd;
+            senddata->data.mes[0] = 'y';
+            strcpy(senddata->data.send_name,"server");
+
+            if(send(pack->data.recv_fd,senddata,sizeof(PACK),0) < 0)
+                my_err("send",__LINE__);
+        }
+             
+        mysql_free_result(res_ptr);        //释放空间    
+    }
+    close_mysql(mysql);  
     return EXIT_SUCCESS;  
 }
 
@@ -206,39 +206,73 @@ void userregister(PACK *pack){
         my_err("myrecvtemp",__LINE__);
     }
 
-    char buffer[20];
+    char buffer[150];
    
     sprintf(buffer,"select password from 用户数据 where `name` = '%s'",data1->username);
     res = mysql_query(&mysql, buffer); //查询语句  
-    if (res){         
-        printf("没有此人可以注册此账户\n");
-        
-        sprintf(buffer,"insert into 用户数据 values(NULL,%s,%s,%s,%s,0)",data1->username,data1->sex,data1->password,data1->mibao);
-
-        res = mysql_query(&mysql, buffer); //查询语句 
-
-
-
+    if (res){
+        printf("SELECT error:%s\n",mysql_error(&mysql));         
     }
     else{        
         res_ptr = mysql_store_result(&mysql);             //取出结果集  mysql_store_result()立即检索所有的行，
-        if(res_ptr){   
-            //	int num = (unsigned long)mysql_num_rows(res_ptr);
-            printf("%lu Rows\n",(unsigned long)mysql_num_rows(res_ptr));   //返回所有的行
-            j = mysql_num_fields(res_ptr);//获取 列数    
-            while((sqlrow = mysql_fetch_row(res_ptr)))  
-            {   //依次取出记录  
-                for(i = 0; i < j; i++){
-                    printf("%s\t", sqlrow[i]);              //输出  
-                }
-                printf("\n");          
-            }              
-            if (mysql_errno(&mysql)){                      
-                fprintf(stderr,"Retrive error:s\n",mysql_error(&mysql));               
-            }        
-        }        
+        
+        
+        PACK * senddata = NULL;
+        senddata = (PACK *)malloc(sizeof(PACK));
+
+        if(mysql_num_rows(res_ptr) == 0){
+            printf("没有此人可以注册此账户\n");
+            sprintf(buffer,"insert into 用户数据 values(NULL,%s,%s,%s,%s,0)",data1->username,data1->sex,data1->password,data1->mibao);     
+            
+            res = mysql_query(&mysql, buffer); //查询语句 
+            if (res){
+                printf("SELECT error:%s\n",mysql_error(&mysql));
+                senddata->type = REGISTER;
+                senddata->data.recv_fd = pack->data.send_fd;
+                senddata->data.mes[0] = 'n';
+                if(send(pack->data.send_fd,senddata,sizeof(PACK),0) < 0)
+                    my_err("send",__LINE__);
+                    return ;         
+            }
+
+            senddata->type = REGISTER;
+		    senddata->data.recv_fd = pack->data.send_fd;
+            senddata->data.mes[0] = 'y';
+            strcpy(senddata->data.send_name,"server");
+
+            if(send(pack->data.recv_fd,senddata,sizeof(PACK),0) < 0)
+                my_err("send",__LINE__);
+            
+
+        }
+        else if(mysql_num_rows(res_ptr) > 0){
+            printf("该账户已存在，请提示重新输入\n");
+            senddata->type = REGISTER;
+		    senddata->data.recv_fd = pack->data.send_fd;
+            senddata->data.mes[0] = 'n';
+            if(send(pack->data.send_fd,senddata,sizeof(PACK),0) < 0)
+                my_err("send",__LINE__);
+
+        }
+
+       
+        
+
+    /*    printf("%lu Rows\n",(unsigned long)mysql_num_rows(res_ptr));   //返回所有的行
+        j = mysql_num_fields(res_ptr);//获取 列数    
+        while((sqlrow = mysql_fetch_row(res_ptr)))  
+        {   //依次取出记录  
+            for(i = 0; i < j; i++){
+                printf("%s\t", sqlrow[i]);              //输出  
+            }
+            printf("\n");          
+        }              
+        if (mysql_errno(&mysql)){                      
+            fprintf(stderr,"Retrive error:s\n",mysql_error(&mysql));               
+        } */              
         mysql_free_result(res_ptr);        //释放空间
     }
+    close_mysql(mysql); 
 }
 
 void srv_deletefriend(PACK *pack){
@@ -250,7 +284,7 @@ void srv_deletefriend(PACK *pack){
     int res, i, j;  
     mysqlinit(&mysql);
 
-
+    close_mysql(mysql); 
 }
 
 void srv_addfriend(PACK *pack){
@@ -261,6 +295,8 @@ void srv_addfriend(PACK *pack){
     MYSQL_FIELD *fd;  
     int res, i, j;  
     mysqlinit(&mysql);
+
+    close_mysql(mysql); 
 }
 
 void srv_groupquit(PACK *pack){
@@ -270,6 +306,8 @@ void srv_groupquit(PACK *pack){
     MYSQL_FIELD *fd;  
     int res, i, j;  
     mysqlinit(&mysql);
+
+    close_mysql(mysql); 
 }
 
 void srv_groupjoin(PACK *pack){
@@ -279,6 +317,8 @@ void srv_groupjoin(PACK *pack){
     MYSQL_FIELD *fd;  
     int res, i, j;  
     mysqlinit(&mysql);
+
+    close_mysql(mysql); 
 }
 
 void srv_findpassword(PACK *pack){
@@ -288,6 +328,8 @@ void srv_findpassword(PACK *pack){
     MYSQL_FIELD *fd;  
     int res, i, j;  
     mysqlinit(&mysql);
+
+    close_mysql(mysql); 
 }
 
 void srv_chatwithfriend(PACK *pack){
@@ -297,6 +339,8 @@ void srv_chatwithfriend(PACK *pack){
     MYSQL_FIELD *fd;  
     int res, i, j;  
     mysqlinit(&mysql);
+
+    close_mysql(mysql); 
 }
 
 void srv_chatwithgroup(PACK *pack){
@@ -306,6 +350,8 @@ void srv_chatwithgroup(PACK *pack){
     MYSQL_FIELD *fd;  
     int res, i, j;  
     mysqlinit(&mysql);
+
+    close_mysql(mysql); 
 }
 
 void srv_groupkick(PACK *pack){
@@ -316,6 +362,8 @@ void srv_groupkick(PACK *pack){
     MYSQL_FIELD *fd;  
     int res, i, j;  
     mysqlinit(&mysql);
+
+    close_mysql(mysql); 
 }
 
 void srv_frienchat(PACK *pack){
@@ -325,6 +373,8 @@ void srv_frienchat(PACK *pack){
     MYSQL_FIELD *fd;  
     int res, i, j;  
     mysqlinit(&mysql);
+
+    close_mysql(mysql); 
 }
 
 
@@ -337,6 +387,7 @@ void srv_groupsee(PACK *pack){
     int res, i, j;  
     mysqlinit(&mysql);
 
+    close_mysql(mysql); 
 }
 
 
@@ -347,6 +398,8 @@ void srv_friendsee(PACK *pack){
     MYSQL_FIELD *fd;  
     int res, i, j;  
     mysqlinit(&mysql);
+
+    close_mysql(mysql); 
 }
 
 void srv_groupdel(PACK *pack){
@@ -356,6 +409,8 @@ void srv_groupdel(PACK *pack){
     MYSQL_FIELD *fd;  
     int res, i, j;  
     mysqlinit(&mysql);
+
+    close_mysql(mysql); 
 }
 
 void srv_creategroup(PACK *pack){
@@ -365,4 +420,36 @@ void srv_creategroup(PACK *pack){
     MYSQL_FIELD *fd;  
     int res, i, j;  
     mysqlinit(&mysql);
+
+    close_mysql(mysql); 
+}
+
+void srv_findpassword(PACK *pack){
+    MYSQL mysql;
+    MYSQL_RES *res_ptr;  
+    MYSQL_ROW sqlrow;  
+    MYSQL_FIELD *fd;  
+    int res, i, j;  
+    mysqlinit(&mysql);
+
+    close_mysql(mysql); 
+}
+
+void srv_changenum(PACK *pack){
+    MYSQL mysql;
+    MYSQL_RES *res_ptr;  
+    MYSQL_ROW sqlrow;  
+    MYSQL_FIELD *fd;  
+    int res, i, j;  
+    mysqlinit(&mysql);
+
+    close_mysql(mysql); 
+}
+
+
+int close_mysql(MYSQL mysql){
+	mysql_close(&mysql);
+	mysql_library_end();
+	printf("end\n");
+	return 0;
 }

@@ -35,6 +35,14 @@ int my_recvlogin(PACK *data2,login_data *data1,int len){
     static int len_remain = 0;
     
 
+
+   for(int i = 0;i < xxx;i++)
+        printf("%c ",data2->data.mes[i]);
+
+
+
+
+
     //如果自定义缓冲区没有数据，则从套接字中读取数据
     
     if(len_remain <= 0){
@@ -53,9 +61,11 @@ int my_recvlogin(PACK *data2,login_data *data1,int len){
     pread = data2->data.mes; //初始化pread指针
     int i,j;
     int wei = 0;
-
+    int xxx = strlen(data2->data.mes);
+ 
     for(j = 0;j < 2;j++){
-        for(i = 0;*pread != '\0';i++){
+        //printf("jinru\n");
+        for(i = 0;*pread != '\n';i++){
             if(j == 0){
                 if(i > len){
                     printf("越栈\n");
@@ -73,9 +83,11 @@ int my_recvlogin(PACK *data2,login_data *data1,int len){
         }
         *pread++;
     }
-    
-    pread++;
-
+    /*printf("%d\n%d\n%s\n%s",strlen(data1->username),strlen(data1->password),data1->username,data1->password);
+    getchar();
+    getchar();
+    getchar();*/
+    //pread++;
     return i;
     //读取成功
 }
@@ -88,7 +100,7 @@ int my_recvregister(PACK *data2,info_user *data1,int len){
     int wei = 0;
 
     for(j = 0;j < 3;j++){
-        for(i = 0;*pread != '\0';i++){
+        for(i = 0;*pread != '\n';i++){
             if(j == 0){
                 if(i > len){
                     printf("越栈\n");
