@@ -1,6 +1,6 @@
 #include"zzy_UI.h"
 //欢迎登陆界面
-int welcome_login_IU(void){
+int welcome_login_UI(void){
     printf("Welcome to use zzychat!\n");
     printf("please input your choice!\n");
     printf("[1]注册 [2]登录 [3]找回密码 [4]退出\n");

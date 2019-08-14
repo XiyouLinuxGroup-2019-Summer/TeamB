@@ -9,12 +9,6 @@
 #define GROUPNAME_SIZE 100   //群组最大数
 
 
-typedef struct user_inforn{
-    char username[MAX_SIZE];      //用户名
-    unsigned int password[10];    //加密后的密码
-    int statue;                   //用户状态
-    int socket_id;
-}USER_INFORN;
 
 //关闭mysql
 void mysql_close(void); 

@@ -1,17 +1,22 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<sys/types.h>
-#include<sys/socket.h>
-#include<unistd.h>
-#include<string.h>
-#include<netinet/in.h>
-#include<arpa/inet.h>
-#include<error.h>
-#include<sys/epoll.h>
-#include<pthread.h>
 #include"my_recv.h"
 #include"zzy_server.h"
 #include"mysql.h"
+
+
+
+//选择函数
+void *choices(void *recv_pack){
+    pack *recv_pack_t = (pack*)recv_pack;
+    printf("\nthe choice is %d\n",recv_pack_t->type);
+    switch(recv_pack_t->type){
+        case LOGIN:
+             login_server(recv_pack_t);
+             break;
+        case REGISTING:
+             registering_server(recv_pack_t);
+    }   
+    return NULL;
+}
 
 
 
@@ -21,12 +26,12 @@ int login_server(pack *recv_pack){
     int id = 0;
     char a[10];
 
-    if((id = find_name(recv_pack->send_name)) == 0){    //该用户在线，没有退出
+    if((id = find_name(recv_pack->send_name)) == 0){//找不到用户
         a[0] = '2';
     }
-    else if(userinfon_t[id].statue == ONLINE){
+    else if(userinfon_t[id].statue == ONLINE){  //用户在线
         a[0] = '3';
-    }else if(passward(id,recv_pack[id].message) == 0){
+    }else if(passward(id,recv_pack[id].message) == 0){  //登录成功
         a[0] = '1';
         userinfon_t[id].socket_id = recv_pack[id].send_fd;
         printf("\n-----------longin----------\n");
@@ -52,6 +57,7 @@ int login_server(pack *recv_pack){
     return 0;
 }
 
+//注册函数
 int registering_server(pack *recv_pack){
     char a[10];
     int id = 0;
@@ -80,27 +86,68 @@ int registering_server(pack *recv_pack){
     return 0;
 }
 
-//选择函数
-void *choices(void *recv_pack){
-    pack *recv_pack_t = (pack*)recv_pack;
-    printf("\nthe choice is %d\n",recv_pack_t->type);
-    switch(recv_pack_t->type){
-        case LOGIN:
-             login_server(recv_pack_t);
-             break;
-        case REGISTING:
-             registering_server(recv_pack_t);
-    }
-    return NULL;
-}
 
+
+
+//开启两个线程
 /*void pthread_init(){
     printf("pthread_init");
     pthread_t pid_send,pid_file_check;
-    pthread_create(&pid_send,NULL,serv_send_thread,NULL);
+    pthread_create(&pid_send,NULL,downline_send_server,NULL);
     pthread_create(&pid_file_check,NULL,pthread_check_file,NULL);
 }*/
 
+
+//上线发包
+void downline_send_server(void){
+     int statue = DOWLOAD;
+     int recv_fd_t,recv_fd_online;
+     while(1){   
+         //上锁，防止处理包时包发生改变
+         pthread_mutex_lock(&mutex); 
+         
+         statue = ONLINE;
+         for(int i = pack_send_num-1;i >= 0;i--){   
+             for(int j = 1; j <= pack_send_num ;j++){   
+                //
+                 if(strcmp(pack_send[i].recv_name,userinfon_t[j].username) == 0){   
+                     statue = userinfon_t[j].statue;
+                     if(statue == ONLINE)
+                         recv_fd_online = userinfon_t[j].socket_id;
+                     break;
+                 }   
+             }   
+             //判断状态，若在线，或即将登陆，或注册成功，则发包
+             if(statue == ONLINE || pack_send[i].type == LOGIN || pack_send[i].type == REGISTING){   
+                 if(statue == ONLINE)
+                     recv_fd_t = recv_fd_online;
+                 else
+                     recv_fd_t = pack_send[i].recv_fd;
+                     
+                 if(send(recv_fd_t,&pack_send[i],sizeof(pack),0) < 0){ 
+                     my_err("send",__LINE__);
+                 } 
+                 printf("\nsend pack\n");
+                 printf("type is %d\n",pack_send[i].type);
+                 printf("from %s  to  %s\n",pack_send[i].send_name,pack_send[i].recv_name);
+                 printf("message : %s\n",pack_send[i].message);
+                 printf("recv_fd : %d\n",pack_send[i].recv_fd);
+                 pack_send_num-- ;
+                 printf("pack_send_num:%d\n", pack_send_num);
+                 
+                 //向前移动一位
+                 for(int j = i;j <= pack_send_num && pack_send_num;j++){   
+                     pack_send[j] = pack_send[j+1];
+                 }   
+                 break;
+             }   
+         }
+         //解锁
+         pthread_mutex_unlock(&mutex);
+         //停顿，等待发包结束
+         usleep(100);  
+     }   
+ }
 
 int main(){
     int conn_fd;
@@ -214,75 +261,49 @@ int main(){
 }
 
 
-/*int login_server(int conn_fd,char recv_buf[]){
-    int ret;
-    int name_num;
-    int flag_recv = USERNAME;
-                if(flag_recv == USERNAME){
-                            ret = strlen(recv_buf);
-                            recv_buf[ret-1] = '\0';//将数据结束符由'\n'换成'\0'
-                            name_num = find_name(recv_buf);
-                            switch(name_num){
-                                case -1:
-                                    send_data(conn_fd,"n\n");
-                                    break;
-                                case -2:
-                                    exit(1);
-                                    break;
-                                default:
-                                    send_data(conn_fd,"y\n");
-                                    flag_recv = PASSWORD;
-                                    break;
-                            }
-                        }else if(flag_recv == PASSWORD){
-                            ret = strlen(recv_buf);
-                            recv_buf[ret-1] = '\0';
-*/                            
-                            /* printf("%s \n",users[name_num].password); */
 
-/*                            if(strcmp(users[name_num].password,recv_buf) == 0){
-                                printf("--111--\n");
-                                send_data(conn_fd,"y\n");
-                                send_data(conn_fd,"Welcome!\n");
-                                printf("%s login\n",users[name_num].username);
-                                flag_recv = 1;
-*/                                /* break;  //跳出while循环 */
-                            /* } */
-/*                        }else if(flag_recv == 1){
-                            send_data(conn_fd,"n\n");
-                        }
-            return 0;
-}*/
 
 //查找用户名是否存在，存在返回该用户名的下标，不存在则返回-1.出错返回-2
-int find_name(const char*name){
-
+int find_name(const char *name){
+    //名字为空返回
     if(name == NULL){
         printf("please input name,NULL, pointer!\n");
         return -2;
     }
-    
-    
+    //用户总数为0
+    if(user_sum == 0){
+        return -1;
+    }
+    //查找并返回用户id
+    for(int i = 0;i < user_sum;i++){
+        if((strcmp(name,userinfon_t[i].username)) == 0){
+            return i;
+        }
+    }
+
     //先用数组存着，后期改---------------------------------------------------------------------------------------
     /*for(int i = 0;users[i].username[0] != ' ';i++){
         if(strcmp(users[i].username,name) == 0){    //相同
             return i;
         }
     }*/
-    
-
-
     return -1;
 }
 
-//发送数据
-void send_data(int conn_fd,const char *string){
-    if((send(conn_fd,string,strlen(string),0)) < 0){
+//添加到发送数据的队列，发送时加锁，以防发送时数据包被改变
+void send_data(pack *pack_t){
+    pthread_mutex_lock(&mutex);
+    memcpy(&(pack_send[pack_send_num++]),pack_t,sizeof(pack));
+    pthread_mutex_unlock(&mutex);
+    /*if((send(conn_fd,string,strlen(string),0)) < 0){
         my_err("send",__LINE__);    //发送时发生错误
-    }
+    }*/
 }
 
 
+
+
+//创建函数---------------------------------------------------------------------------------------------------------
 //创建套接字
 int create_sockfd(){
     //创建监听套接字(socket描述符)，制定协议族IPV4，字节流服务传输
@@ -336,3 +357,4 @@ void epoll_del(int epfd,int fd){
         perror("epoll_ctl del error!\n");
     }
 } 
+//创建函数-----------------------------------------------------------------------------------------------------
