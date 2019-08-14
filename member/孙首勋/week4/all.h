@@ -14,7 +14,7 @@
 #define GROUP_DEL                10
 #define CHAT_ONE                 11
 #define CHAT_MANY                12
-#define FILE_SEND_BEGIN          13
+#define FIND_PASSWD              13
 #define FILE_SEND_BEGIN_RP       14
 #define FILE_SEND_STOP_RP        15
 #define FILE_RECV_RE             16
@@ -28,21 +28,24 @@
 #define GROUP_KICK               24
 #define GROUP_SET                25
 #define FRI_SEE                  26
-
+#define CHANGE_NUM               27
 
 #define EXIT                     -1
 #define USER_MAX                 100
 #define GROUP_MAX                100
 
+#define USER_NAMEMAX             100
+#define GROUP_NAMEMAX            100
+
 #define BUFSIZE                  1024
 #define PAGE_SIZE                10
 typedef struct datas{
-    char     send_name[MAX_CHAR];
-    char     recv_name[MAX_CHAR];
+    char     send_name[USER_NAMEMAX];
+    char     recv_name[USER_NAMEMAX];
     int      send_fd;
     int      recv_fd;
     //time_t   time;
-    char     mes[MAX_CHAR*2];
+    char     mes[MAX_CHAR];
 }DATA;
  
 typedef struct package{
@@ -51,15 +54,13 @@ typedef struct package{
 }PACK;
 
 
-typedef struct info_group
-{
+typedef struct info_group{
     char  group_name[MAX_CHAR];
     int   member_num;
     char  member_name[USER_MAX][MAX_CHAR];  //begin from 1
 }info_group;
  
-typedef struct infogroup_node
-{
+typedef struct infogroup_node{
     info_group data;
 	struct infogroup_node *next;
 	struct infogroup_node *prev;
@@ -86,7 +87,7 @@ typedef struct infouser_node
     info_user data;
 	struct infouser_node *next;
 	struct infouser_node *prev;
-}infouser_node_t,*infouser_list_t;
+}infouser_node_t,* infouser_list_t;
 
 
 
