@@ -29,6 +29,10 @@
 #define GROUP_SET                25
 #define FRI_SEE                  26
 #define CHANGE_NUM               27
+#define FRI_MES                  28
+#define GRO_MES                  29
+#define FRIQUE                   30
+#define GROQUE                   31
 
 #define EXIT                     -1
 #define USER_MAX                 100
@@ -53,6 +57,22 @@ typedef struct package{
     DATA  data;
 }PACK;
 
+typedef struct box{
+    char     send_name[USER_NAMEMAX];
+    char     recv_name[USER_NAMEMAX];
+    int      send_fd;
+    int      recv_fd;
+    //time_t   time;
+    char     mes[MAX_CHAR];
+    int      type;
+}BOX;
+
+typedef struct box_message{
+    BOX  data;
+    struct box_message *next;
+	struct box_message *prev;
+}box_node_t,*box_list_t;
+
 
 typedef struct info_group{
     char  group_name[MAX_CHAR];
@@ -70,6 +90,7 @@ typedef struct infogroup_node{
 typedef struct info_user 
 {
     char username[MAX_CHAR];
+    int uid;
     unsigned int password[4];
     int  statu;//don't foget to change is to 0 when the server begin
     int  socket_id;

@@ -15,17 +15,6 @@
 #include "md5.h"
 #include "list.h"
 
-    int i,id;
-	int choice;
-
-	infouser_list_t head;
-	infouser_node_t * pos;
-
-	//List_Init(head,infouser_node_t);
-    
-
-
-
 
 #define SERV_PORT   4507  //     服务器的端口
 #define LISTENQ 12        //连接请求队列的最大长度
@@ -45,6 +34,7 @@ void send_data(int conn_fd,const char *string){
 }
 
 int main(){
+    List_Init(head,infouser_node_t);
 
     int sock_fd,conn_fd;
     int optval;
@@ -70,7 +60,6 @@ int main(){
     }
 
     setsockopt(sock_fd,SOL_SOCKET,SO_KEEPALIVE,(void*)&optval,sizeof(int));
-    memset(&serv_addr,0,sizeof(struct sockaddr_in));
 
     //初始化服务器段地址结构
     memset(&serv_addr,0,sizeof(struct sockaddr_in));
@@ -125,7 +114,7 @@ int main(){
                     
                     
                     if(conn_fd < 0)  my_err("accept",__LINE__);
-                    printf("accept a new client,ip: %s \n",inet_ntoa(cli_addr.sin_addr));
+                        printf("accept a new client,ip: %s \n",inet_ntoa(cli_addr.sin_addr));
 
                     ev.data.fd = conn_fd;
                     ev.events = EPOLLIN|EPOLLET;
@@ -160,10 +149,6 @@ int main(){
                     epoll_ctl(epfd,EPOLL_CTL_MOD,sockfd,&ev);//修改标识符，等待下一个循环发送数据，异步处理的精髓
                     */
                 }
-                else
-                {
-                    //其他情况的处理
-                }  
             }
         }
     }

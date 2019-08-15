@@ -1,5 +1,4 @@
 #define MY_RECV_C
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <string.h>
@@ -28,34 +27,6 @@ void my_err(const char * err_string,int line){
  **/
 int my_recvlogin(PACK *data2,login_data *data1,int len){
 
-    /*PACK * recvdata = NULL;
-    recvdata = (PACK *)malloc(sizeof(PACK));
-
-    static char *pread; //指向下一次读取数据的位置
-    static int len_remain = 0;
-    
-
-
-   for(int i = 0;i < xxx;i++)
-        printf("%c ",data2->data.mes[i]);
-
-
-
-
-
-    //如果自定义缓冲区没有数据，则从套接字中读取数据
-    
-    if(len_remain <= 0){
-        if((len_remain = recv(conn_fd,recvdata,sizeof(PACK),0)) < 0){
-            my_err("recv",__LINE__);
-        }
-        else if(len_remain == 0){
-            return 0;
-        }
-        pread = recvdata->data.mes; //初始化pread指针
-    }*/
-
-    //从自定义缓冲区中读取一次数据
     
     static char *pread; //指向下一次读取数据的位置
     pread = data2->data.mes; //初始化pread指针
@@ -99,30 +70,44 @@ int my_recvregister(PACK *data2,info_user *data1,int len){
     int i,j;
     int wei = 0;
 
-    for(j = 0;j < 3;j++){
+    for(j = 0;j < 4;j++){
         for(i = 0;*pread != '\n';i++){
             if(j == 0){
                 if(i > len){
-                    printf("越栈\n");
+                    printf("越栈1\n");
                     return -1;
                 }
                 data1->username[i] = *pread++;
             }
             else if(j == 1){
                 if(i > len){
-                    printf("越栈\n");
+                    printf("越栈2\n");
                     return -1;
                 }
                 data1->password[i] = *pread++;
             }
             else if(j == 2){
-                data1->friends_num;
+                if(i > len){
+                    //printf("%s %s %s",data1->password,data1->username,data1->mibao);
+                    printf("越栈3\n");
+                    //printf("%s %s %s",data1->password,data1->username,data1->mibao);
+                    return -1;
+                }
+                data1->mibao[i] = *pread++;
+            }
+            else if(j == 3){
+                if(i > len){
+                    printf("越栈4\n");
+                    return -1;    
+                }
+                data1->sex[i] = *pread++;
             }
         }
         *pread++;
     }
+    printf("%s",data1->password);
     
-    pread++;
+    //pread++;
 
     return i;
     //读取成功
