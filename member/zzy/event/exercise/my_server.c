@@ -137,7 +137,6 @@ int main(){
                     send_data(conn_fd,"n\n");
                 }
             }
-            
             close(sock_fd);
             close(conn_fd);
             exit(0);    //结束子进程
