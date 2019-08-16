@@ -12,7 +12,7 @@
 #include "list.h"
 
 infouser_list_t head;
-
+infouser_node_t * pos;
 void *myallthread(PACK *pack);
 int threadlogin(PACK *pack);
 void userregister(PACK *pack);
@@ -33,4 +33,7 @@ void srv_changenum(PACK *pack);
 int close_mysql(MYSQL mysql);
 void judgeaddfri(PACK *pack);
 void judgeaddgro(PACK *pack);
+void srv_frimessbox(PACK *pack);
+void srv_gromessbox(PACK *pack);
+int Filetran(PACK *pack);
 #endif

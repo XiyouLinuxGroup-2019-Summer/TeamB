@@ -1,12 +1,5 @@
-#define MY_RECV_C
-#include <stdio.h>
-#include <sys/types.h>
-#include <string.h>
-#include <errno.h>
-#include <sys/socket.h>
+
 #include "my_recv.h"
-#include <stdlib.h>
-#include "all.h"
 //自定义错误处理函数
 
 
@@ -107,7 +100,6 @@ int my_recvregister(PACK *data2,info_user *data1,int len){
     }
     printf("%s",data1->password);
     
-    //pread++;
 
     return i;
     //读取成功

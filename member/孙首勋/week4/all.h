@@ -34,6 +34,7 @@
 #define FRIQUE                   30
 #define GROQUE                   31
 
+
 #define EXIT                     -1
 #define USER_MAX                 100
 #define GROUP_MAX                100
@@ -43,6 +44,8 @@
 
 #define BUFSIZE                  1024
 #define PAGE_SIZE                10
+#define LEN_PACK                 1236
+
 typedef struct datas{
     char     send_name[USER_NAMEMAX];
     char     recv_name[USER_NAMEMAX];
@@ -111,25 +114,10 @@ typedef struct infouser_node
 }infouser_node_t,* infouser_list_t;
 
 
-
 typedef struct login{
     char username[20];
     char password[20];
 }login_data;
 
-
-typedef struct prinit_mes{
-    char name[MAX_CHAR];
-    char time[MAX_CHAR];
-    char mes [MAX_CHAR];
-    
-}PRINT_MES;
-
-
-typedef struct  friend_info{
-    int statu;
-    int mes_num;
-    char name[MAX_CHAR];
-}FRIEND_INFO; 
 
 #endif
