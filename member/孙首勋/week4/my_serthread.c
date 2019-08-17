@@ -76,7 +76,9 @@ void *myallthread(PACK *pack){
         case CHAT_MANY:
             srv_gromessbox(pack);
             break;
-
+        case FILE_SEND_BEGIN_RP:
+            Filetran(pack);
+            break;
         default:
             break;
     }
@@ -1193,28 +1195,23 @@ void srv_frimessbox(PACK *pack){
 
 
 int Filetran(PACK *pack){
-
 	int fd;
 	int flag = 0;
 	int re;
 	char buf[1024];
-        /*List_ForEach(head,curpos){
-            if(strcmp(curpos->account,file.acceptaccount) == 0){
-                flag = 1;
-                fd = curpos->fd;
-                //fid.acceptid = curpos->id;
-                break;
-            }
-        }*/
-	
-	//printf( "fd = %d\n",fd);
-	//memset(buf,0,1024);    //初始化
-     
-	if((re = (send(pack->data.recv_fd,pack,sizeof(PACK),0))) < 0){
-        printf("错误\n");
-	    perror(buf);
+    List_ForEach(head,pos){
+        if(pack->data.send_fd == pos->data.uid){
+            flag = 1;
+            fd = pos->data.socket_id;
+            break;
+        }
     }
-        
+	
+     if(flag == 1){
+        if((re = (send(fd,pack,sizeof(PACK),0))) < 0){
+            my_err("send",__LINE__);
+        }
+     }
 	return 0;
 }
 

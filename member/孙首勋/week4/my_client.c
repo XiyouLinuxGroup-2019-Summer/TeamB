@@ -287,23 +287,17 @@ void *clientrecive(void *conn_fd){
 
 		if(recvdata->type == FILE_SEND_BEGIN_RP){
 			
-		int fd;
+			int sendfd;
+			printf("%s",recvdata->data.send_name);
+			sendfd = open(recvdata->data.send_name,O_CREAT | O_WRONLY | O_APPEND,0777);
+				my_err(recvdata->data.send_name,__LINE__);
 
-        fd = open(recvdata->data.send_name,O_CREAT | O_WRONLY | O_APPEND,0777);
-			my_err(recvdata->data.send_name,__LINE__);
+			int sum = 0;
+			sum = write(sendfd,recvdata->data.mes,recvdata->data.send_fd);
 
-        printf( "fd = %d\n",fd);
-        int sum = 0;
-        //printf( "len = %d\n",file.len);
-        sum = write(fd,file.file,file.len);
-        printf( "sum = %d\n",sum);
-
-        close(fd);
-
-			
-
+			printf( "sum = %d\n",sum);
+			close(sendfd);
 		}
-	
 	}
 }
 
@@ -861,6 +855,7 @@ void UI_user(int conn_fd){
 		printf("【3】修改密码\n");
 		printf("【4】查看消息盒子\n");
 		printf("【5】退出登录\n");
+		printf("【6】发送文件\n");
 		printf("\n=======================\n");
 		printf("请输出你的选择：");
 		scanf("%d",&choice);
@@ -878,6 +873,8 @@ void UI_user(int conn_fd){
 		case 4:
 			watchlistbox(conn_fd);
 			break;
+		case 6:
+			UI_filesend(conn_fd);
 			//default:break;
 		}
 		
@@ -1291,43 +1288,27 @@ int UI_filesend(int conn_fd){
 	
 	PACK *senddata = NULL;
 	senddata = (PACK *)malloc(sizeof(PACK));
-	
-	int sum = 0;
-	FILE *fp;
-	int re;
-	int fd;
+	int sum = 0,re,fd;
+
 	printf( "请输入对方的账号:");
 	scanf("%d",&senddata->data.send_fd);
-
-	printf( "请输入文件路径:");
+	printf( "请输入本目录下的文件名:");
 	scanf("%s",senddata->data.send_name);
 
-	int fd;
 	fd = open(senddata->data.send_name,O_RDONLY);
+	
 	senddata->type = FILE_SEND_BEGIN_RP;
-	//printf( "fd = %d\n",fd);
-	
-
 	sum = read(fd,senddata->data.mes,sizeof(senddata->data.mes));
-	senddata->data.recv_name;
-	printf( "sum = %d\n",sum);
-	while(sum != 0)
-	{        
 
+	printf( "sum = %d\n",sum);
+	while(sum != 0){        
 		if((re = (send(conn_fd,senddata,sizeof(PACK),0))) < 0)
-			printf( "错误\n");
-	
-	
+			my_err("send",__LINE__);
+
 		printf( "sum = %d\n",sum);
-		sum = read(fd,senddata->data.mes,sizeof(PACK));
-		//senddata->data.recv_name = sum;
+		sum = read(fd,senddata->data.mes,sizeof(senddata->data.mes));
+
 		if(sum < 0)
 			break;
 	}
 }
-
-/*int File_transfer_persistence(filenode file)
-{
-        
-        return 0;
-}*/
