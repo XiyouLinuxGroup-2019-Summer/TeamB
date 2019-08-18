@@ -15,17 +15,6 @@
 #include "md5.h"
 #include "list.h"
 
-    int i,id;
-	int choice;
-
-	infouser_list_t head;
-	infouser_node_t * pos;
-
-	//List_Init(head,infouser_node_t);
-    
-
-
-
 
 #define SERV_PORT   4507  //     服务器的端口
 #define LISTENQ 12        //连接请求队列的最大长度
@@ -45,6 +34,7 @@ void send_data(int conn_fd,const char *string){
 }
 
 int main(){
+    List_Init(head,infouser_node_t);
 
     int sock_fd,conn_fd;
     int optval;
@@ -70,7 +60,6 @@ int main(){
     }
 
     setsockopt(sock_fd,SOL_SOCKET,SO_KEEPALIVE,(void*)&optval,sizeof(int));
-    memset(&serv_addr,0,sizeof(struct sockaddr_in));
 
     //初始化服务器段地址结构
     memset(&serv_addr,0,sizeof(struct sockaddr_in));
@@ -88,7 +77,7 @@ int main(){
 
     cli_len = sizeof(struct sockaddr_in);
 
-   //创建一个epoll
+    //创建一个epoll
     //参数含义epollid，和最多监视数量
     int epfd;
     epfd = epoll_create(EPOLEN);
@@ -113,6 +102,8 @@ int main(){
 
         if(nfds > 0){
             for(int i = 0;i < nfds;i++){
+
+
                 printf(" The event type is %d\n",events[i].events);
 
                 if(events[i].data.fd == sock_fd){//如果是主socket的事件，则表示有新的连接 
@@ -125,45 +116,54 @@ int main(){
                     
                     
                     if(conn_fd < 0)  my_err("accept",__LINE__);
-                    printf("accept a new client,ip: %s \n",inet_ntoa(cli_addr.sin_addr));
+                        printf("accept a new client,ip: %s \n",inet_ntoa(cli_addr.sin_addr));
 
                     ev.data.fd = conn_fd;
-                    ev.events = EPOLLIN|EPOLLET;
+                    ev.events = EPOLLIN|EPOLLET|EPOLLRDHUP;
                     epoll_ctl(epfd,EPOLL_CTL_ADD,conn_fd,&ev); //将新的fd添加到epoll的监听队列
 
                 }
                 else if(events[i].events&EPOLLIN){//接收到数据读socket
-                    //printf("dsadsadsadadas\n");
-                    PACK *recvdata = NULL;
-                    recvdata = (PACK *)malloc(sizeof(PACK));
-                    int len_remain;
-                    if((len_remain = recv(events[i].data.fd,recvdata,sizeof(PACK),0)) < 0){
-                        perror("recv");
-                        exit(1);
+                    
+                    infouser_list_t curpos;
+                    if(events[i].events & EPOLLRDHUP){
+
+     	 		        List_ForEach(head,curpos){
+        		            if(curpos->data.socket_id == events[i].data.fd){
+					        List_DelNode(curpos);
+					        printf( "下线删除成功\n");
+               		   		break;
+               			    }
+        		        }
+                        printf( "断开连接\n");
+                        epoll_ctl(epfd,EPOLL_CTL_DEL,events[i].data.fd,NULL);
+                        continue;
                     }
-                    //printf("%s",recvdata->data.mes);
+                    else{
+                        PACK *recvdata = NULL;
+                        recvdata = (PACK *)malloc(sizeof(PACK));
 
-                /*recv_buf.send_fd = events[i].data.fd; //发送者的套接字已经改变 应转换为accept后的套接字
-                recv_t *temp=(recv_t*)malloc(sizeof(recv_t)); //防止多线程访问一个结构体
-                *temp=recv_buf;
-                temp->epfd=epfd;
-                temp->conn_fd=events[i].data.fd;
-*/
-                    pthread_t tid1;
-                    recvdata->data.recv_fd = events[i].data.fd;
-                    pthread_create(&tid1,NULL,(void *)myallthread,recvdata);
+                        int  len_pack = LEN_PACK;
+                        char *p = (char *)(recvdata);
+                        while(len_pack > 0){
+                            size_t n;
+                            if((n = recv(events[i].data.fd,p,len_pack,0)) < 0){
+                                if (errno != EAGAIN) {
+                                      perror("recv");
+                                    exit(1);   
+                                } 
+                            }
+                            printf("recv %zd bytes\n", n);
+                            len_pack -= n;
+                            p += n;
+                        }
 
-                    /*if((sockfd = events[i].data.fd) < 0) continue;
-                    int n = read(sockfd,line,MAXLINE); //读
-                        ev.data.ptr = md; //md为自定义类型，添加数据
-                    ev.events = EPOLLOUT|EPOLLET; 
-                    epoll_ctl(epfd,EPOLL_CTL_MOD,sockfd,&ev);//修改标识符，等待下一个循环发送数据，异步处理的精髓
-                    */
+                        pthread_t tid1;
+                        recvdata->data.recv_fd = events[i].data.fd;
+                        pthread_create(&tid1,NULL,(void *)myallthread,recvdata);
+
+                    }
                 }
-                else
-                {
-                    //其他情况的处理
-                }  
             }
         }
     }
