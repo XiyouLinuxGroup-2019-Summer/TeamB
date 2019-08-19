@@ -38,7 +38,6 @@ int main(){
 
     int sock_fd,conn_fd;
     int optval;
-    int flag_recv = USERNAME;//标识接受到的是用户名还是密码
     int ret;
     int name_num;
     pid_t pid;
@@ -104,7 +103,7 @@ int main(){
             for(int i = 0;i < nfds;i++){
 
 
-                printf(" The event type is %d\n",events[i].events);
+                printf(" The event type is %x\n",events[i].events);
 
                 if(events[i].data.fd == sock_fd){//如果是主socket的事件，则表示有新的连接 
                     struct sockaddr_in cliaddr;
@@ -119,7 +118,7 @@ int main(){
                         printf("accept a new client,ip: %s \n",inet_ntoa(cli_addr.sin_addr));
 
                     ev.data.fd = conn_fd;
-                    ev.events = EPOLLIN|EPOLLET|EPOLLRDHUP;
+                    ev.events = EPOLLIN|/*EPOLLET|*/EPOLLRDHUP;
                     epoll_ctl(epfd,EPOLL_CTL_ADD,conn_fd,&ev); //将新的fd添加到epoll的监听队列
 
                 }
@@ -145,19 +144,25 @@ int main(){
 
                         int  len_pack = LEN_PACK;
                         char *p = (char *)(recvdata);
-                        while(len_pack > 0){
+                        printf("recv block\n");
+                        ssize_t n = recv(events[i].data.fd, p, len_pack, MSG_WAITALL);
+                        printf("recv %zd bytes\n", n);
+                        /*while(len_pack > 0){
                             size_t n;
-                            if((n = recv(events[i].data.fd,p,len_pack,0)) < 0){
+                            printf("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh\n");
+                            if((n = recv(events[i].data.fd,p,len_pack,MSG_WAITALL)) < 0){
                                 if (errno != EAGAIN) {
                                       perror("recv");
                                     exit(1);   
                                 } 
                             }
-                            printf("recv %zd bytes\n", n);
+                            printf("%s", recvdata->data.mes) ;
+                    
+                            printf("recv %zd byte-s       %d\n", n, len_pack);
                             len_pack -= n;
                             p += n;
-                        }
-
+                        }*/
+                        //myallthread(recvdada);
                         pthread_t tid1;
                         recvdata->data.recv_fd = events[i].data.fd;
                         pthread_create(&tid1,NULL,(void *)myallthread,recvdata);

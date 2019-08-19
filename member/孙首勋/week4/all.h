@@ -16,12 +16,8 @@
 #define CHAT_MANY                12
 #define FIND_PASSWD              13
 #define FILE_SEND_BEGIN_RP       14
-#define FILE_SEND_STOP_RP        15
-#define FILE_RECV_RE             16
 #define FILE_SEND                17
 #define FILE_RECV_BEGIN          18 
-#define FILE_RECV_BEGIN_RP       19
-#define FILE_RECV_STOP_RP        20
 #define FILE_RECV                21
 #define FILE_FINI_RP             22
 #define MES_RECORD               23
@@ -94,13 +90,9 @@ typedef struct info_user
 {
     char username[MAX_CHAR];
     int uid;
-    unsigned int password[4];
+    char password[20];
     int  statu;//don't foget to change is to 0 when the server begin
     int  socket_id;
-    char friends[USER_MAX][MAX_CHAR];//begin from 1
-    int  friends_num;
-    char group[GROUP_MAX][MAX_CHAR];  //begin from 1
-    char group_num;
     char sex[3];
     char mibao[100];
 }info_user;

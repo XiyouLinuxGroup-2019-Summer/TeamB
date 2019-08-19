@@ -23,12 +23,10 @@ void *myallthread(PACK *pack){
         case GRO_MES:
             srv_groupchat(pack);
             break;
-        case FRI_CHA:
-            //srv_frienchat(pack);
-            break;
         case FRI_SEE:
             srv_friendsee(pack);
             break;
+
         case GROUP_CREATE:
             srv_creategroup(pack);
             break;
@@ -76,6 +74,7 @@ void *myallthread(PACK *pack){
         case CHAT_MANY:
             srv_gromessbox(pack);
             break;
+
         case FILE_SEND_BEGIN_RP:
             Filetran(pack);
             break;
@@ -129,9 +128,9 @@ int threadlogin(PACK *pack){
 
     char buffer[150];
     memset(buffer,0,sizeof(buffer));
-    //printf("dasdsadsa %s\n%s\n",data1->username,data1->password);
-    sprintf(buffer,"select uid from 用户数据 where `name` = '%s' and `password` = '%s'",data1->username,data1->password);
-
+ 
+    sprintf(buffer,"select uid from 用户数据 where name ='%s' and password = '%s'",data1->username,data1->password);
+    
     res = mysql_query(&mysql, buffer); //查询语句  
     if (res){         
         printf("SELECT error:%s\n",mysql_error(&mysql));     
@@ -141,20 +140,19 @@ int threadlogin(PACK *pack){
         
         PACK * senddata = NULL;
         senddata = (PACK *)malloc(sizeof(PACK));
-
-        if(mysql_num_rows(res_ptr) == 0){
+        int ress =mysql_num_rows(res_ptr)  ;
+        if(ress== 0){
 
             printf("login error");
             senddata->type = LOGIN;
 		    senddata->data.recv_fd = pack->data.send_fd;
             senddata->data.mes[0] = 'n';
-            strcpy(senddata->data.send_name,"server");
 
             if(send(pack->data.recv_fd,senddata,sizeof(PACK),0) < 0)
                 my_err("send",__LINE__);
         
         }
-        else if(mysql_num_rows(res_ptr) > 0){   
+        else if(ress > 0){   
             printf("登录成功\n"); 
 
             
@@ -182,9 +180,7 @@ int threadlogin(PACK *pack){
             if(mysql_errno(&mysql)){                      
                 fprintf(stderr,"Retrive error:s\n",mysql_error(&mysql));               
             }
-
-
-            
+           
             
             senddata->type = LOGIN;
 		    senddata->data.recv_fd = pos->data.uid;
@@ -194,9 +190,6 @@ int threadlogin(PACK *pack){
                 my_err("send",__LINE__); 
 
 
-
-
-            
             
             memset(buffer,0,sizeof(buffer));
             sprintf(buffer,"select * from 个人消息 where suid = %d",pos->data.uid);
@@ -208,15 +201,26 @@ int threadlogin(PACK *pack){
             while((sqlrow = mysql_fetch_row(res_ptr)))  
             {   //依次取出记录
                 senddata = (PACK *)malloc(sizeof(PACK));
-
-                senddata->data.send_fd = atoi(sqlrow[0]);
-                senddata->data.recv_fd = atoi(sqlrow[4]);
-                strcmp(senddata->data.mes,sqlrow[2]);
-                printf("xxxxxxxxxx%s\n\n",senddata->data.mes);
-                senddata->type = atoi(sqlrow[3]);
+               
+                
 
                 for(i = 0; i < j; i++){
-                    printf("%s\t", sqlrow[i]);              //输出  
+                    printf("%s\t", sqlrow[i]);              //输出
+                    if(i == 0){
+                        senddata->data.send_fd = atoi(sqlrow[i]);
+                    }
+                    else if(i == 1){
+                        strcpy(senddata->data.recv_name,sqlrow[i]);
+                    }
+                    else if(i == 2){
+                        strcpy(senddata->data.mes,sqlrow[i]);
+                    }
+                    else if(i == 3){
+                        senddata->type = atoi(sqlrow[i]);
+                    }
+                    else if(i == 4){
+                        senddata->data.recv_fd = atoi(sqlrow[i]);
+                    }  
                 }
 
                 if(send(pack->data.recv_fd,senddata,sizeof(PACK),0) < 0)
@@ -227,7 +231,6 @@ int threadlogin(PACK *pack){
             if (mysql_errno(&mysql)){                      
                 fprintf(stderr,"Retrive error:s\n",mysql_error(&mysql));               
             }
-          
         }
              
         mysql_free_result(res_ptr);        //释放空间    
@@ -379,15 +382,30 @@ void srv_addfriend(PACK *pack){
             else{
                     List_ForEach(head,pos){
                     if(pos->data.uid == fd){
-                        PACK * senddata = NULL;
-                        senddata = (PACK *)malloc(sizeof(PACK));
-                        senddata->type = FRIQUE;                
-                        senddata->data.recv_fd = pack->data.send_fd;
-                        senddata->data.send_fd = fd;
-                        strcpy(senddata->data.mes,pack->data.mes); 
-                        strcpy(senddata->data.send_name,pack->data.send_name);
-                        if(send(pos->data.socket_id,senddata,sizeof(PACK),0) < 0)
-                            my_err("send",__LINE__);
+
+                    int cnt;
+                    //printf("sprintf前\n");
+                    sprintf(buffer,"select uid from 个人消息 where fuid = %d and suid = %d and message = '%s' and type = %d",pack->data.send_fd,fd,pack->data.mes,FRIQUE);
+                    //printf("friendsprintf后%s\n",buffer);
+                    res_ptr = mysql_store_result(&mysql);
+                    while((sqlrow = mysql_fetch_row(res_ptr)))  
+                    {   //依次取出记录  
+                        printf("%s\t", sqlrow[0]);
+                        cnt = atoi(sqlrow[0]);              //输出  
+                        printf("\n");          
+                    }
+
+
+                    PACK * senddata = NULL;
+                    senddata = (PACK *)malloc(sizeof(PACK));
+                    senddata->type = FRIQUE;                
+                    senddata->data.recv_fd = cnt;
+                    senddata->data.send_fd = fd;
+                    strcpy(senddata->data.mes,pack->data.mes); 
+                    strcpy(senddata->data.send_name,pack->data.send_name);
+                    if(send(pos->data.socket_id,senddata,sizeof(PACK),0) < 0)
+                        my_err("send",__LINE__);
+                    
                     }
                 }
             }
@@ -447,61 +465,61 @@ void srv_groupjoin(PACK *pack){
     memset(buffer,0,sizeof(buffer));
 
 
-
+    int fd1,fd2;
     printf("%s\n",pack->data.mes);
-    sprintf(buffer,"select uid,boss from 群数据 where `name` = '%s'",pack->data.mes);
+    sprintf(buffer,"select uid,boss from 群数据 where uid = %d",atoi(pack->data.mes));
     printf("%s\n",buffer);
     res = mysql_query(&mysql, buffer); //查询语句  
     if (res){
         printf("SELECT error:%s\n",mysql_error(&mysql));         
     }
     else{
-            int fd1,fd2;
-            res_ptr = mysql_store_result(&mysql);             //取出结果集  mysql_store_result()立即检索所有的行，
-            while((sqlrow = mysql_fetch_row(res_ptr)))  
-            {   //依次取出记录  
-                printf("%s\t%s\t",sqlrow[0],sqlrow[1]);
-                fd1 = atoi(sqlrow[1]);
-                fd2 = atoi(sqlrow[0]);              //输出  
-                printf("\n");          
-            }
+            
+        res_ptr = mysql_store_result(&mysql);             //取出结果集  mysql_store_result()立即检索所有的行，
+        while((sqlrow = mysql_fetch_row(res_ptr)))  
+        {   //依次取出记录  
+            printf("%s\t%s\t",sqlrow[0],sqlrow[1]);
+            fd1 = atoi(sqlrow[1]);
+            fd2 = atoi(sqlrow[0]);              //输出  
+            printf("\n");          
+        }
+        
+        memset(buffer,0,sizeof(buffer));
 
-            strcpy(pack->data.mes,"join group\0");            
-            memset(buffer,0,sizeof(buffer));
-
-            sprintf(buffer,"insert into 个人消息 values(%d,%d,'%s',%d,null)",pack->data.send_fd,fd2,pack->data.mes,GROQUE);
-            res = mysql_query(&mysql, buffer); //查询语句  
-            //res_ptr = mysql_store_result(&mysql);
-            if (res){
-                printf("SELECT error:%s\n",mysql_error(&mysql));         
-            }
-            else{
-                    List_ForEach(head,pos){
-                    if(pos->data.uid == fd1){
-                        
-
-                        int cnt;
-                        sprintf(buffer,"select uid from 个人消息 where fuid = %d and suid = %d and message = '%s'",pack->data.send_fd,fd2,pack->data.mes);
-                        res_ptr = mysql_store_result(&mysql);
-                        while((sqlrow = mysql_fetch_row(res_ptr)))  
-                        {   //依次取出记录  
-                            printf("%s\t", sqlrow[0]);
-                            cnt = atoi(sqlrow[0]);              //输出  
-                            printf("\n");          
-                        }
-
-                        PACK * senddata = NULL;
-                        senddata = (PACK *)malloc(sizeof(PACK));
-                        senddata->type = GROQUE;                
-                        senddata->data.recv_fd = cnt;
-                        senddata->data.send_fd = fd2;
-                        strcpy(senddata->data.mes,pack->data.mes); 
-                        strcpy(senddata->data.send_name,pack->data.send_name);
-                        if(send(pos->data.socket_id,senddata,sizeof(PACK),0) < 0)
-                            my_err("send",__LINE__);
+        sprintf(buffer,"insert into 个人消息 values(%d,%d,'%s',%d,null)",pack->data.send_fd,fd1,pack->data.mes,GROQUE);
+        res = mysql_query(&mysql, buffer); //查询语句  
+        //res_ptr = mysql_store_result(&mysql);
+        if (res){
+            printf("SELECT error:%s\n",mysql_error(&mysql));         
+        }
+        else{
+            //printf("dasdadsadadasdasd\n");
+                List_ForEach(head,pos){
+                if(pos->data.uid == fd1){
+                    int cnt;
+                    //printf("sprintf前\n");
+                    sprintf(buffer,"select uid from 个人消息 where fuid = %d and suid = %d and message = '%s' and type = %d",pack->data.send_fd,fd1,pack->data.mes,GROQUE);
+                    //printf("sprintf后%s\n",buffer);
+                    res_ptr = mysql_store_result(&mysql);
+                    while((sqlrow = mysql_fetch_row(res_ptr)))  
+                    {   //依次取出记录  
+                        printf("%s\t", sqlrow[0]);
+                        cnt = atoi(sqlrow[0]);              //输出  
+                        printf("\n");          
                     }
+                    //printf("dasdadsadadasdasd\n");
+                    PACK * senddata = NULL;
+                    senddata = (PACK *)malloc(sizeof(PACK));
+                    senddata->type = GROQUE;                
+                    senddata->data.recv_fd = cnt;
+                    senddata->data.send_fd = fd2;
+                    strcpy(senddata->data.mes,pack->data.mes); 
+                    strcpy(senddata->data.send_name,pack->data.send_name);
+                    if(send(pos->data.socket_id,senddata,sizeof(PACK),0) < 0)
+                        my_err("send",__LINE__);
                 }
             }
+        }
     }
 
 
@@ -666,17 +684,17 @@ void srv_frienchat(PACK *pack){
 void srv_groupsee(PACK *pack){
 
     MYSQL mysql;
-    MYSQL_RES *res_ptr;  
-    MYSQL_ROW sqlrow;  
+    MYSQL_RES *res_ptr,*res_ptr1;  
+    MYSQL_ROW sqlrow,sqlrow1;  
     MYSQL_FIELD *fd;  
-    int res, i, j;  
+    int res,res1, i, j;  
     mysqlinit(&mysql);
     char buffer[150];
     memset(buffer,0,sizeof(buffer));
 
 
-    sprintf(buffer,"select * from 群数据 where `uid` = %d",pack->data.send_fd);
-    
+    sprintf(buffer,"select guid,power from 群用户 where suid = %d",pack->data.send_fd);
+
     res = mysql_query(&mysql, buffer); //查询语句  
     if (res){         
         printf("SELECT error:%s\n",mysql_error(&mysql));     
@@ -696,20 +714,38 @@ void srv_groupsee(PACK *pack){
                     senddata->data.recv_fd = atoi(sqlrow[i]);
                 }
                 if(i == 1){
-                    strcpy(senddata->data.mes,sqlrow[i]);
-                }
-                if(i == 2){
                     senddata->data.send_fd = atoi(sqlrow[i]);
-                }            
+                }         
             }
             printf("\n");
 
-            if(send(pack->data.recv_fd,senddata,sizeof(PACK),0) < 0)
-                my_err("send",__LINE__);          
+
+
+
+            char buffer1[150];
+            memset(buffer1,0,sizeof(buffer1));
+            sprintf(buffer1,"select name,boss from 群数据 where uid = %d",senddata->data.recv_fd);
+            
+            res1 = mysql_query(&mysql, buffer1); //查询语句  
+            if (res1){         
+                printf("SELECT error:%s\n",mysql_error(&mysql));     
+            }
+            else{
+                res_ptr1 = mysql_store_result(&mysql);             //取出结果集  mysql_store_result()立即检索所有的行
+                sqlrow1 = mysql_fetch_row(res_ptr1);
+                strcpy(senddata->data.mes,sqlrow1[0]);
+                strcpy(senddata->data.recv_name,sqlrow1[1]);
+                if(send(pack->data.recv_fd,senddata,sizeof(PACK),0) < 0)
+                    my_err("send",__LINE__);
+            }
+
+              
         }
         if (mysql_errno(&mysql)){                      
             fprintf(stderr,"Retrive error:s\n",mysql_error(&mysql));               
-        }              
+        }
+
+        mysql_free_result(res_ptr1);        //释放空间 
         mysql_free_result(res_ptr);        //释放空间    
     }
     close_mysql(mysql);  
@@ -720,10 +756,10 @@ void srv_groupsee(PACK *pack){
 
 void srv_friendsee(PACK *pack){
     MYSQL mysql;
-    MYSQL_RES *res_ptr;  
-    MYSQL_ROW sqlrow;  
+    MYSQL_RES *res_ptr,*res_ptr1;  
+    MYSQL_ROW sqlrow,sqlrow1;  
     MYSQL_FIELD *fd;  
-    int res, i, j;  
+    int res,res1, i, j;  
     mysqlinit(&mysql);
 
     char buffer[150];
@@ -747,7 +783,7 @@ void srv_friendsee(PACK *pack){
             senddata = (PACK *)malloc(sizeof(PACK));  
             senddata->type = FRI_SEE;
             //senddata->data.recv_fd = pack->data.send_fd;
-            strcpy(senddata->data.send_name,"server");
+
              senddata->data.send_fd = 0;
             printf("%d\n",j);
             for(i = 0; i < j; i++){
@@ -762,9 +798,27 @@ void srv_friendsee(PACK *pack){
                 senddata->data.recv_fd = atoi(sqlrow[i]);
             }
             printf("\n");
-            if(send(pack->data.recv_fd,senddata,sizeof(PACK),0) < 0)
-                my_err("send",__LINE__);  
+
+
+            char buffer1[150];
+            memset(buffer1,0,sizeof(buffer1));
+            sprintf(buffer1,"select name,sex from 用户数据 where uid = %d",senddata->data.recv_fd);
+            
+            res1 = mysql_query(&mysql, buffer1); //查询语句  
+            if (res1){         
+                printf("SELECT error:%s\n",mysql_error(&mysql));     
+            }
+            else{
+                res_ptr1 = mysql_store_result(&mysql);             //取出结果集  mysql_store_result()立即检索所有的行
+                sqlrow1 = mysql_fetch_row(res_ptr1);
+                strcpy(senddata->data.send_name,sqlrow1[0]);
+                strcpy(senddata->data.mes,sqlrow1[1]);
+                if(send(pack->data.recv_fd,senddata,sizeof(PACK),0) < 0)
+                    my_err("send",__LINE__);
+            }
         }
+        mysql_free_result(res_ptr);        //释放空间 
+        mysql_free_result(res_ptr1);        //释放空间   
     }
     close_mysql(mysql); 
 }
@@ -810,6 +864,7 @@ void srv_groupdel(PACK *pack){
                     my_err("send",__LINE__);
             }
         }
+        mysql_free_result(res_ptr);        //释放空间  
     }  
     close_mysql(mysql); 
 }
@@ -873,6 +928,7 @@ void srv_creategroup(PACK *pack){
                     my_err("send",__LINE__);
             }
         }
+        mysql_free_result(res_ptr);        //释放空间  
     }
     close_mysql(mysql); 
 }
@@ -888,7 +944,8 @@ void srv_changenum(PACK *pack){
 
     char buffer[150];
     memset(buffer,0,sizeof(buffer));
-    sprintf(buffer,"update 学生数据 set password = '%s' where username = '%s'",pack->data.mes,pack->data.send_name);
+    sprintf(buffer,"update 用户数据 set password = '%s' where name = '%s'",pack->data.mes,pack->data.send_name);
+    //printf("%s",buffer);
     res = mysql_query(&mysql, buffer); //查询语句 
     if (res){
         printf("SELECT error:%s\n",mysql_error(&mysql));         
@@ -964,15 +1021,6 @@ void judgeaddfri(PACK *pack){
 
 
                 memset(buffer,0,sizeof(buffer));
-                sprintf(buffer,"insert into 朋友 (fuid,suid)values(%d,%d)",fuid,suid);
-                res = mysql_query(&mysql, buffer); //查询语句
-                if(res){
-                    printf("SELECT error:%s\n",mysql_error(&mysql)); 
-                }
-
-
-
-                memset(buffer,0,sizeof(buffer));
                 sprintf(buffer,"delete from 个人消息 where uid = %d",pack->data.send_fd);
                 res = mysql_query(&mysql, buffer); //查询语句
                 if(res){
@@ -1002,7 +1050,7 @@ void judgeaddfri(PACK *pack){
         } 
     }
 
-
+    mysql_free_result(res_ptr);        //释放空间  
     close_mysql(mysql); 
 }
 void judgeaddgro(PACK *pack){
@@ -1018,7 +1066,7 @@ void judgeaddgro(PACK *pack){
     memset(buffer,0,sizeof(buffer));
 
     int fuid,suid;
-    sprintf(buffer,"select fuid,suid from 个人消息 where uid = %d",pack->data.send_fd);
+    sprintf(buffer,"select fuid,message from 个人消息 where uid = %d",pack->data.send_fd);
     res = mysql_query(&mysql,buffer); //查询语句 
 
     if(pack->data.mes[0] == 'y'){
@@ -1046,7 +1094,7 @@ void judgeaddgro(PACK *pack){
                     my_err("send",__LINE__);*/  
             }
             memset(buffer,0,sizeof(buffer));
-            sprintf(buffer,"insert into 群用户 (guid,suid)values(%d,%d)",suid,fuid);
+            sprintf(buffer,"insert into 群用户 (guid,suid,power)values(%d,%d,0)",suid,fuid);
             res = mysql_query(&mysql, buffer); //查询语句
             if(res){
                 printf("SELECT error:%s\n",mysql_error(&mysql)); 
@@ -1081,7 +1129,7 @@ void judgeaddgro(PACK *pack){
             }
         } 
     }
-
+    mysql_free_result(res_ptr);        //释放空间  
     close_mysql(mysql); 
 }
 
@@ -1135,7 +1183,9 @@ void srv_gromessbox(PACK *pack){
             if(send(pack->data.recv_fd,senddata,sizeof(PACK),0) < 0)
                 my_err("send",__LINE__);  
         }
+        mysql_free_result(res_ptr);        //释放空间  
     }
+    close_mysql(mysql); 
 }
 
 void srv_frimessbox(PACK *pack){
@@ -1189,6 +1239,7 @@ void srv_frimessbox(PACK *pack){
                 my_err("send",__LINE__);  
         }
     }
+    mysql_free_result(res_ptr);        //释放空间
     close_mysql(mysql); 
 
 }
@@ -1199,6 +1250,7 @@ int Filetran(PACK *pack){
 	int flag = 0;
 	int re;
 	char buf[1024];
+    static int ff = 0;
     List_ForEach(head,pos){
         if(pack->data.send_fd == pos->data.uid){
             flag = 1;
@@ -1206,12 +1258,13 @@ int Filetran(PACK *pack){
             break;
         }
     }
-	
      if(flag == 1){
         if((re = (send(fd,pack,sizeof(PACK),0))) < 0){
             my_err("send",__LINE__);
         }
+        ff+=re ;
      }
+    printf("服务器接受到字节数：%d\n", ff) ;
 	return 0;
 }
 
