@@ -387,6 +387,7 @@ void srv_addfriend(PACK *pack){
                     //printf("sprintf前\n");
                     sprintf(buffer,"select uid from 个人消息 where fuid = %d and suid = %d and message = '%s' and type = %d",pack->data.send_fd,fd,pack->data.mes,FRIQUE);
                     //printf("friendsprintf后%s\n",buffer);
+                    res = mysql_query(&mysql, buffer); //查询语句
                     res_ptr = mysql_store_result(&mysql);
                     while((sqlrow = mysql_fetch_row(res_ptr)))  
                     {   //依次取出记录  
@@ -395,13 +396,13 @@ void srv_addfriend(PACK *pack){
                         printf("\n");          
                     }
 
-
                     PACK * senddata = NULL;
                     senddata = (PACK *)malloc(sizeof(PACK));
                     senddata->type = FRIQUE;                
                     senddata->data.recv_fd = cnt;
-                    senddata->data.send_fd = fd;
+                    senddata->data.send_fd = pack->data.send_fd;
                     strcpy(senddata->data.mes,pack->data.mes); 
+                    sprintf(senddata->data.recv_name,"%s",fd);
                     strcpy(senddata->data.send_name,pack->data.send_name);
                     if(send(pos->data.socket_id,senddata,sizeof(PACK),0) < 0)
                         my_err("send",__LINE__);
@@ -493,13 +494,14 @@ void srv_groupjoin(PACK *pack){
             printf("SELECT error:%s\n",mysql_error(&mysql));         
         }
         else{
-            //printf("dasdadsadadasdasd\n");
+
                 List_ForEach(head,pos){
                 if(pos->data.uid == fd1){
                     int cnt;
-                    //printf("sprintf前\n");
+
                     sprintf(buffer,"select uid from 个人消息 where fuid = %d and suid = %d and message = '%s' and type = %d",pack->data.send_fd,fd1,pack->data.mes,GROQUE);
-                    //printf("sprintf后%s\n",buffer);
+                    printf("sprintf后%s\n",buffer);
+                    res = mysql_query(&mysql, buffer); //查询语句
                     res_ptr = mysql_store_result(&mysql);
                     while((sqlrow = mysql_fetch_row(res_ptr)))  
                     {   //依次取出记录  
@@ -507,14 +509,15 @@ void srv_groupjoin(PACK *pack){
                         cnt = atoi(sqlrow[0]);              //输出  
                         printf("\n");          
                     }
-                    //printf("dasdadsadadasdasd\n");
+
                     PACK * senddata = NULL;
                     senddata = (PACK *)malloc(sizeof(PACK));
+
                     senddata->type = GROQUE;                
                     senddata->data.recv_fd = cnt;
-                    senddata->data.send_fd = fd2;
+                    senddata->data.send_fd = pack->data.send_fd;
                     strcpy(senddata->data.mes,pack->data.mes); 
-                    strcpy(senddata->data.send_name,pack->data.send_name);
+                    sprintf(senddata->data.recv_name,"%d",fd1);
                     if(send(pos->data.socket_id,senddata,sizeof(PACK),0) < 0)
                         my_err("send",__LINE__);
                 }
@@ -535,7 +538,7 @@ void srv_findpassword(PACK *pack){
     mysqlinit(&mysql);
     char buffer[150];
     memset(buffer,0,sizeof(buffer));
-    sprintf(buffer,"select password from 用户数据 where `mibao` = '%s'",pack->data.mes);
+    sprintf(buffer,"select password from 用户数据 where `mibao` = '%s' and username = '%s'",pack->data.mes,pack->data.send_name);
     res = mysql_query(&mysql, buffer); //查询语句 
     if (res){
         printf("SELECT error:%s\n",mysql_error(&mysql));         
@@ -609,8 +612,9 @@ void srv_groupchat(PACK *pack){
                             senddata->type = GRO_MES;
                             senddata->data.recv_fd = atoi(sqlrow[i]);
                             strcpy(senddata->data.mes,pack->data.mes);
-                            
-                            if(send(senddata->data.recv_fd,senddata,sizeof(PACK),0) < 0)
+                            senddata->data.send_fd = atoi(pack->data.send_name);
+                            sprintf(senddata->data.recv_name,"%d",pack->data.send_fd);
+                            if(send(pos->data.socket_id,senddata,sizeof(PACK),0) < 0)
                                 my_err("send",__LINE__);  
                         }
                     }
@@ -667,10 +671,9 @@ void srv_frienchat(PACK *pack){
                 senddata = (PACK *)malloc(sizeof(PACK));
                 senddata->type = FRI_MES;                
                 senddata->data.recv_fd = atoi(pack->data.send_name);
-                senddata->data.send_fd = pack->data.recv_fd;
-
+                senddata->data.send_fd =atoi(pack->data.send_name);
+                sprintf(senddata->data.recv_name,"%d",pack->data.send_fd);
                 strcpy(senddata->data.mes,pack->data.mes); 
-                strcpy(senddata->data.send_name,pack->data.send_name);
                 if(send(pos->data.socket_id,senddata,sizeof(PACK),0) < 0)
                     my_err("send",__LINE__);
             }
@@ -712,6 +715,7 @@ void srv_groupsee(PACK *pack){
                 printf("%s\t", sqlrow[i]);
                 if(i == 0){
                     senddata->data.recv_fd = atoi(sqlrow[i]);
+                    //printf("send _>data-> recvfd :%d\n",senddata->data.recv_fd);
                 }
                 if(i == 1){
                     senddata->data.send_fd = atoi(sqlrow[i]);

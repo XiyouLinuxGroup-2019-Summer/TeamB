@@ -149,7 +149,7 @@ int get_userinfo(char *mes,int len){
 //然后用过fd 发送出去
 void input_userinfo(int conn_fd,const PACK *senddata){
 
-	printf("%d", sizeof(PACK)) ;
+	//printf("%d", sizeof(PACK)) ;
 	if(send(conn_fd,senddata,sizeof(PACK),0) < 0)
 		my_err("send",__LINE__);
 }
@@ -206,17 +206,19 @@ void *clientrecive(void *conn_fd){
 		
 		if(recvdata->type == GRO_MES){
 
-			if(recvdata->data.recv_fd == grochatfd){
-				printf("%s>>%s\n",recvdata->data.send_name,recvdata->data.mes);
-				printf("you[|]quit>>");
+			if(atoi(recvdata->data.recv_name) == grochatfd){
+
+				//printf("recv_name = %d, grochatfd = %d recvdata sendfd = %d\n",atoi(recvdata->data.recv_name),grochatfd,recvdata->data.send_fd);
+				printf("[%d]>>%s\n",recvdata->data.send_fd,recvdata->data.mes);
+				//printf("you[|]quit>>\n");
 			}
 			else{
-				printf("\n---------------你有群聊消息来了，在消息盒子！！-----------------\n");
+				printf("---------------你有群聊消息来了，在消息盒子！！-----------------\n");
 				newmessage->data.type = recvdata->type;
 				strcpy(newmessage->data.mes,recvdata->data.mes);
 				strcpy(newmessage->data.recv_name,recvdata->data.recv_name);
 				strcpy(newmessage->data.send_name,recvdata->data.send_name);
-				newmessage->data.recv_fd = recvdata->data.recv_fd;
+				newmessage->data.recv_fd = 0;
 				newmessage->data.send_fd = recvdata->data.send_fd;
 				List_AddHead(head,newmessage);
 				messnum++;
@@ -225,16 +227,17 @@ void *clientrecive(void *conn_fd){
 
 		if(recvdata->type == FRI_MES){
 
-			if(recvdata->data.recv_fd == chatfd){
-				printf("【%s】>>%s\n",recvdata->data.send_name,recvdata->data.mes);
+			if(recvdata->data.send_fd == chatfd){
+				printf("[%d]>>%s\n",recvdata->data.send_fd,recvdata->data.mes);
+				printf("you[|]quit>>\n");
 			}
 			else{
-				printf("\n---------------你有朋友消息来了，在消息盒子！！-----------------\n");
+				printf("---------------你有朋友消息来了，在消息盒子！！-----------------\n");
 				newmessage->data.type = recvdata->type;
 				strcpy(newmessage->data.mes,recvdata->data.mes);
 				strcpy(newmessage->data.recv_name,recvdata->data.recv_name);
 				strcpy(newmessage->data.send_name,recvdata->data.send_name);
-				newmessage->data.recv_fd = recvdata->data.recv_fd;
+				newmessage->data.recv_fd = -1;
 				newmessage->data.send_fd = recvdata->data.send_fd;
 				List_AddHead(head,newmessage);
 				messnum++;
@@ -369,7 +372,6 @@ void watchfrilist(int conn_fd){
 				printf("请输入你要删除好友的uid：");
 				scanf("%d",&deluid);
 				getchar();
-				system("clear");
 				List_ForEach(headuser,pos1){
 					if(pos1->data.recv_fd == deluid){
 						if(UI_frienddel(deluid,conn_fd))
@@ -403,7 +405,6 @@ void watchfrilist(int conn_fd){
 				printf( "请输入你想要私聊的用户uid：");
 				scanf("%d",&chatfd);
 				getchar();
-				system("clear");
 				List_ForEach(headuser,pos1){
 					if(pos1->data.recv_fd == chatfd){
 						if(UI_friendchat(chatfd,conn_fd))
@@ -421,7 +422,6 @@ void watchfrilist(int conn_fd){
 				printf( "请输入你想要查看用户uid：");
 				scanf("%d",&chatfd);
 				getchar();
-				system("clear");
 				List_ForEach(headuser,pos1){
 					if(pos1->data.recv_fd == chatfd){
 						if(UI_frimessbox(chatfd,conn_fd))
@@ -514,7 +514,6 @@ void watchgrouplist(int conn_fd){
 				printf("[请不要输入已加入群id] 请输入想要加入群的uid：");
 				scanf("%d",&groupid);
 				getchar();
-				system("clear");
 				if(UI_groupadd(conn_fd,groupid))
 				{
 					paging.totalRecords = groupnum + 1;
@@ -526,7 +525,6 @@ void watchgrouplist(int conn_fd){
 				printf("请输入解散群的uid：");
 				scanf("%d",&groupid);
 				getchar();
-				system("clear");
 				List_ForEach(headgroup,pos1){
 
 					if(pos1->data.recv_fd == groupid && pos1->data.send_fd == useruid){
@@ -699,7 +697,7 @@ int login(int conn_fd){
 				scanf("%d",&flag);
 				getchar();
 				if(flag == 10086){
-					return 1;
+					return 0;
 				}
 			}
 		}
@@ -728,8 +726,7 @@ void UI_loginin(int conn_fd){
 			if(login(conn_fd)){
 				return ;
 			}
-			else
-				break;
+			break;
 		case 2:
 			if(UI_zhuce(conn_fd)){
 				return ;
@@ -1064,7 +1061,7 @@ int UI_friendchat(int chatfd,int conn_fd){
 		PACK *senddata = NULL;
 		senddata = (PACK *)malloc(sizeof(PACK));
 
-		printf("you[|]quit>>");
+		printf("you[|]quit>>\n");
 		scanf("%s",&frimessage);
 		
 		senddata->data.send_fd = chatfd;
@@ -1164,10 +1161,12 @@ void watchlistbox(int conn_fd){
 							List_DelNode(pos);
 							judgeaddgro(mes,conn_fd);
 						}
-						else if(pos->data.type == CHAT_ONE){
+						else if(pos->data.type == FRI_MES){
+							List_DelNode(pos);
 							printf("请去查看好友哪里去回复此人\n");
 						}
-						else if(pos->data.type == CHAT_MANY){
+						else if(pos->data.type == GRO_MES){
+							List_DelNode(pos);
 							printf("请去查看群聊的哪里回复该群\n");
 						}
 					}
@@ -1295,19 +1294,19 @@ void printtype(int type){
 			printf("frienchat  ");
             break;
         case GRO_MES:
-		printf("groupchat  ");
+			printf("groupchat  ");
             break;
 
         case GROUP_JOIN:
-		printf("groupjoin  ");
+			printf("groupjoin  ");
             break;
 
         case FRIQUE:
-		printf("judgeaddfri");
+			printf("judgeaddfri");
             break;
 
         case GROQUE:
-		printf("judgeaddgro");
+			printf("judgeaddgro");
             break;
         default:
             break;
