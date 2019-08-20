@@ -695,6 +695,7 @@ void srv_groupsee(PACK *pack){
     char buffer[150];
     memset(buffer,0,sizeof(buffer));
 
+    int cnt = 0;
 
     sprintf(buffer,"select guid,power from 群用户 where suid = %d",pack->data.send_fd);
 
@@ -719,7 +720,8 @@ void srv_groupsee(PACK *pack){
                 }
                 if(i == 1){
                     senddata->data.send_fd = atoi(sqlrow[i]);
-                }         
+                }
+                         
             }
             printf("\n");
 
@@ -739,12 +741,19 @@ void srv_groupsee(PACK *pack){
                 sqlrow1 = mysql_fetch_row(res_ptr1);
                 strcpy(senddata->data.mes,sqlrow1[0]);
                 strcpy(senddata->data.recv_name,sqlrow1[1]);
+                cnt++;
                 if(send(pack->data.recv_fd,senddata,sizeof(PACK),0) < 0)
                     my_err("send",__LINE__);
-            }
-
-              
+            }      
         }
+
+        PACK * senddata = NULL;
+        senddata = (PACK *)malloc(sizeof(PACK));  
+        senddata->type = GROSEEEND;
+        senddata->data.send_fd = cnt;
+        if(send(pack->data.recv_fd,senddata,sizeof(PACK),0) < 0)
+            my_err("send",__LINE__);
+            
         if (mysql_errno(&mysql)){                      
             fprintf(stderr,"Retrive error:s\n",mysql_error(&mysql));               
         }
@@ -768,7 +777,7 @@ void srv_friendsee(PACK *pack){
 
     char buffer[150];
     memset(buffer,0,sizeof(buffer));
-
+    int cnt = 0;
  
     sprintf(buffer,"select suid from 朋友 where fuid = %d",pack->data.send_fd);
 
@@ -817,10 +826,24 @@ void srv_friendsee(PACK *pack){
                 sqlrow1 = mysql_fetch_row(res_ptr1);
                 strcpy(senddata->data.send_name,sqlrow1[0]);
                 strcpy(senddata->data.mes,sqlrow1[1]);
+                cnt++;
                 if(send(pack->data.recv_fd,senddata,sizeof(PACK),0) < 0)
                     my_err("send",__LINE__);
             }
         }
+
+        PACK * senddata = NULL;
+        senddata = (PACK *)malloc(sizeof(PACK));  
+        senddata->type = FRISEEEND;
+        senddata->data.send_fd = cnt;
+        if(send(pack->data.recv_fd,senddata,sizeof(PACK),0) < 0)
+            my_err("send",__LINE__);
+
+        if (mysql_errno(&mysql)){                      
+            fprintf(stderr,"Retrive error:s\n",mysql_error(&mysql));               
+        }
+        
+        
         mysql_free_result(res_ptr);        //释放空间 
         mysql_free_result(res_ptr1);        //释放空间   
     }

@@ -17,9 +17,9 @@
 #define FIND_PASSWD              13
 #define FILE_SEND_BEGIN_RP       14
 #define FILE_SEND                17
-#define FILE_RECV_BEGIN          18 
+#define GROSEEEND                18 
 #define FILE_RECV                21
-#define FILE_FINI_RP             22
+#define FRISEEEND                22
 #define MES_RECORD               23
 #define GROUP_KICK               24
 #define GROUP_SET                25
