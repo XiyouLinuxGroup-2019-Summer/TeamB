@@ -54,7 +54,6 @@ int UI_gromessbox(int grochatfd, int conn_fd);
 int UI_filesend(int conn_fd);
 void printtype(int type);
 
-int get_userinfo(char *mes, int len);
 void input_userinfo(int conn_fd, const PACK *senddata);
 
 void *clientrecive(void *conn_fd);
@@ -70,10 +69,10 @@ box_list_t headuser;
 
 int main(int argc, char **argv)
 {
-	pthread_mutex_init(&mutex,NULL);
-    pthread_mutex_init(&mutex2,NULL);
-    pthread_cond_init(&cond,NULL);
-	pthread_cond_init(&cond2,NULL);
+	pthread_mutex_init(&mutex, NULL);
+	pthread_mutex_init(&mutex2, NULL);
+	pthread_cond_init(&cond, NULL);
+	pthread_cond_init(&cond2, NULL);
 
 	List_Init(head, box_node_t);
 	List_Init(headgroup, box_node_t);
@@ -151,23 +150,6 @@ int main(int argc, char **argv)
 	UI_user(conn_fd);
 }
 
-//获取用户输入存入到mes,mes的长度为lenmax，用户输入数据以’\n‘为结束标志
-int get_userinfo(char *mes, int len)
-{
-	int i;
-	int c;
-	if (mes == NULL)
-		return -1;
-	i = 0;
-	while (((c = getchar()) != '\n') && (c != EOF) && (i < len - 2))
-	{
-		mes[i++] = c;
-	}
-	mes[i++] = '\n';
-	//printf("%s",mes);
-	return 0;
-}
-
 //然后用过fd 发送出去
 void input_userinfo(int conn_fd, const PACK *senddata)
 {
@@ -182,8 +164,7 @@ void *clientrecive(void *conn_fd)
 
 	while (1)
 	{
-		box_node_t *newmessage = NULL;
-		newmessage = (box_list_t)malloc(sizeof(box_node_t));
+		
 
 		PACK *recvdata = NULL;
 		recvdata = (PACK *)malloc(sizeof(PACK));
@@ -208,6 +189,8 @@ void *clientrecive(void *conn_fd)
 
 		if (recvdata->type == FRI_SEE)
 		{
+			box_node_t *newmessage = NULL;
+			newmessage = (box_list_t)malloc(sizeof(box_node_t));
 			newmessage->data.type = recvdata->type;
 			strcpy(newmessage->data.mes, recvdata->data.mes);
 			strcpy(newmessage->data.recv_name, recvdata->data.recv_name);
@@ -216,10 +199,13 @@ void *clientrecive(void *conn_fd)
 			newmessage->data.send_fd = recvdata->data.send_fd;
 			List_AddHead(headuser, newmessage);
 			friendnum++;
+			free(newmessage);
 		}
 
 		if (recvdata->type == GROUP_SEE)
 		{
+			box_node_t *newmessage = NULL;
+			newmessage = (box_list_t)malloc(sizeof(box_node_t));
 			grosee = -1;
 			newmessage->data.type = recvdata->type;
 			strcpy(newmessage->data.mes, recvdata->data.mes);
@@ -228,17 +214,18 @@ void *clientrecive(void *conn_fd)
 			newmessage->data.recv_fd = recvdata->data.recv_fd;
 			newmessage->data.send_fd = recvdata->data.send_fd;
 			List_AddHead(headgroup, newmessage);
+			free(newmessage);
 		}
 
 		if (recvdata->type == GROSEEEND)
 		{
-
 
 			pthread_mutex_lock(&mutex);
 			grosee = 1;
 			pthread_mutex_unlock(&mutex);
 			groupnum = recvdata->data.send_fd;
 			pthread_cond_signal(&cond);
+
 		}
 
 		if (recvdata->type == FRISEEEND)
@@ -249,6 +236,7 @@ void *clientrecive(void *conn_fd)
 			pthread_mutex_unlock(&mutex2);
 			friendnum = recvdata->data.send_fd;
 			pthread_cond_signal(&cond2);
+
 		}
 
 		if (recvdata->type == GRO_MES)
@@ -259,10 +247,12 @@ void *clientrecive(void *conn_fd)
 
 				//printf("recv_name = %d, grochatfd = %d recvdata sendfd = %d\n",atoi(recvdata->data.recv_name),grochatfd,recvdata->data.send_fd);
 				printf("[%d]>>%s\n", recvdata->data.send_fd, recvdata->data.mes);
-				//printf("you[|]quit>>\n");
+				printf("you[|]quit>>\n");
 			}
 			else
 			{
+				box_node_t *newmessage = NULL;
+				newmessage = (box_list_t)malloc(sizeof(box_node_t));
 				printf("---------------你有群聊消息来了，在消息盒子！！-----------------\n");
 				newmessage->data.type = recvdata->type;
 				strcpy(newmessage->data.mes, recvdata->data.mes);
@@ -272,6 +262,7 @@ void *clientrecive(void *conn_fd)
 				newmessage->data.send_fd = recvdata->data.send_fd;
 				List_AddHead(head, newmessage);
 				messnum++;
+				free(newmessage);
 			}
 		}
 
@@ -285,6 +276,8 @@ void *clientrecive(void *conn_fd)
 			}
 			else
 			{
+				box_node_t *newmessage = NULL;
+				newmessage = (box_list_t)malloc(sizeof(box_node_t));
 				printf("---------------你有朋友消息来了，在消息盒子！！-----------------\n");
 				newmessage->data.type = recvdata->type;
 				strcpy(newmessage->data.mes, recvdata->data.mes);
@@ -294,6 +287,7 @@ void *clientrecive(void *conn_fd)
 				newmessage->data.send_fd = recvdata->data.send_fd;
 				List_AddHead(head, newmessage);
 				messnum++;
+				free(newmessage);
 			}
 		}
 
@@ -310,6 +304,8 @@ void *clientrecive(void *conn_fd)
 		if (recvdata->type == FRIQUE || recvdata->type == GROQUE)
 		{
 
+			box_node_t *newmessage = NULL;
+			newmessage = (box_list_t)malloc(sizeof(box_node_t));
 			printf("---------------你有请求消息来了，在消息盒子！！-----------------\n");
 
 			newmessage->data.type = recvdata->type;
@@ -319,14 +315,15 @@ void *clientrecive(void *conn_fd)
 			newmessage->data.recv_fd = recvdata->data.recv_fd;
 			newmessage->data.send_fd = recvdata->data.send_fd;
 			List_AddHead(head, newmessage);
-			groupnum++;
+			messnum++;
+			free(newmessage);
 		}
 
 		if (recvdata->type == FRI_DEL)
 		{
 			if (recvdata->data.mes[0] == 'y')
 			{
-				printf("\n删除好友成功\n");
+				printf("删除好友成功\n");
 			}
 		}
 
@@ -334,7 +331,7 @@ void *clientrecive(void *conn_fd)
 		{
 			if (recvdata->data.mes[0] == 'y')
 			{
-				printf("\n解散群聊成功\n");
+				printf("解散群聊成功\n");
 			}
 		}
 
@@ -342,10 +339,10 @@ void *clientrecive(void *conn_fd)
 		{
 			if (recvdata->data.mes[0] == 'y')
 			{
-				printf("\n创建群聊成功\n");
+				printf("创建群聊成功,请刷新群列表\n");
 			}
 		}
-		static int su = 0, i = 0;
+		static unsigned long long su = 0, i = 0;
 
 		if (recvdata->type == FILE_SEND_BEGIN_RP)
 		{
@@ -363,8 +360,10 @@ void *clientrecive(void *conn_fd)
 			sum = write(sendfd, recvdata->data.mes, sizeof(recvdata->data.mes));
 			su += sum;
 			close(sendfd);
-			printf("写入接收到的字节数：%d", su);
+			printf("写入接收到的字节数：%lld", su);
+			
 		}
+		free(recvdata);
 	}
 }
 
@@ -379,15 +378,16 @@ void watchfrilist(int conn_fd)
 	if (send(conn_fd, senddata, sizeof(PACK), 0) < 0)
 		my_err("send", __LINE__);
 	printf("-----------------------加载中-----------------------\n");
-	
-	while(firsee != 1){
-		pthread_cond_wait(&cond2,&mutex2);
+
+	while (firsee != 1)
+	{
+		pthread_cond_wait(&cond2, &mutex2);
 	}
 
 	int i, id;
 	int choice;
 	int deluid;
-
+	int delfri = 0;
 	char friendname[20];
 	memset(friendname, 0, sizeof(friendname));
 
@@ -433,24 +433,28 @@ void watchfrilist(int conn_fd)
 			}
 			break;
 		case 4:
-
-			printf("请输入你要删除好友的uid：");
+			delfri = 0;
+			printf("[不要输入不是你好友的uid] 请输入你要删除好友的uid：");
 			scanf("%d", &deluid);
 			getchar();
+			system("clear");
 			List_ForEach(headuser, pos1)
 			{
 				if (pos1->data.recv_fd == deluid)
 				{
+					delfri = 1;
 					if (UI_frienddel(deluid, conn_fd))
 					{
 						List_DelNode(pos1);
 						paging.totalRecords = friendnum - 1;
 						List_Paging(headuser, paging, box_node_t);
 					}
-
 					break;
 				}
-				//遍历没有，不聊天。
+			}
+			if (delfri == 0)
+			{
+				printf("他不是你的好友，你也可以选择刷新重试\n");
 			}
 			break;
 		case 5:
@@ -461,10 +465,11 @@ void watchfrilist(int conn_fd)
 			senddata->data.send_fd = useruid;
 			if (LEN_PACK == send(conn_fd, senddata, sizeof(PACK), 0))
 			{
-			
+
 				printf("-----------------------加载中-----------------------\n");
-				while (firsee != 1){
-					pthread_cond_wait(&cond2,&mutex2);
+				while (firsee != 1)
+				{
+					pthread_cond_wait(&cond2, &mutex2);
 				}
 				system("clear");
 				paging.totalRecords = friendnum;
@@ -473,9 +478,10 @@ void watchfrilist(int conn_fd)
 			break;
 		case 6:
 
-			printf("请输入你想要私聊的用户uid：");
+			printf("[不要输入不是你好友的uid] 请输入你想要私聊的用户uid：");
 			scanf("%d", &chatfd);
 			getchar();
+			system("clear");
 			List_ForEach(headuser, pos1)
 			{
 				if (pos1->data.recv_fd == chatfd)
@@ -484,6 +490,7 @@ void watchfrilist(int conn_fd)
 					{
 						paging.totalRecords = friendnum;
 						List_Paging(headuser, paging, box_node_t);
+						chatfd = 0;
 					}
 					break;
 				}
@@ -492,7 +499,7 @@ void watchfrilist(int conn_fd)
 
 		case 7:
 
-			printf("请输入你想要查看用户uid：");
+			printf("[不要输入不是你好友的uid] 请输入你想要查看用户uid：");
 			scanf("%d", &chatfd);
 			getchar();
 			List_ForEach(headuser, pos1)
@@ -528,6 +535,7 @@ void watchfrilist(int conn_fd)
 		}
 	} while (choice != 8);
 	firsee = -1;
+	free(senddata);
 }
 
 void watchgrouplist(int conn_fd)
@@ -542,8 +550,9 @@ void watchgrouplist(int conn_fd)
 		my_err("send", __LINE__);
 	printf("-----------------------------加载中---------------------------\n");
 
-	while(grosee != 1){
-		pthread_cond_wait(&cond,&mutex);
+	while (grosee != 1)
+	{
+		pthread_cond_wait(&cond, &mutex);
 	}
 	int i, id;
 	int choice;
@@ -588,20 +597,22 @@ void watchgrouplist(int conn_fd)
 		switch (choice)
 		{
 		case 3:
-			printf("[请不要输入已加入群id] 请输入想要加入群的uid：");
+			printf("[请不要输入已加入群uid] 请输入想要加入群的uid：");
 			scanf("%d", &groupid);
 			getchar();
+			system("clear");
 			if (UI_groupadd(conn_fd, groupid))
 			{
-				paging.totalRecords = groupnum + 1;
+				paging.totalRecords = groupnum;
 				Paging_Locate_LastPage(headgroup, paging, box_node_t);
 			}
 			break;
 		case 4:
 
-			printf("请输入解散群的uid：");
+			printf("[请不要输入你不是群主的群聊] 请输入解散群的uid：");
 			scanf("%d", &groupid);
 			getchar();
+			system("clear");
 			List_ForEach(headgroup, pos1)
 			{
 
@@ -611,7 +622,7 @@ void watchgrouplist(int conn_fd)
 					if (UI_groupdel(groupid, conn_fd))
 					{
 						List_DelNode(pos1);
-						paging.totalRecords = groupnum - 1;
+						paging.totalRecords = groupnum;
 						List_Paging(headgroup, paging, box_node_t);
 					}
 				}
@@ -628,9 +639,10 @@ void watchgrouplist(int conn_fd)
 			}
 			break;
 		case 6:
-			printf("请输入选择的群聊uid：");
+			printf("[不要输入不是你所加群的uid] 请输入选择的群聊uid：");
 			scanf("%d", &grochatfd);
 			getchar();
+			system("clear");
 			List_ForEach(headgroup, pos1)
 			{
 				if (pos1->data.recv_fd == grochatfd)
@@ -639,6 +651,7 @@ void watchgrouplist(int conn_fd)
 					{
 						paging.totalRecords = groupnum;
 						List_Paging(headgroup, paging, box_node_t);
+						grochatfd = 0;
 					}
 					break;
 				}
@@ -647,13 +660,13 @@ void watchgrouplist(int conn_fd)
 			break;
 		case 7:
 
-			printf("请输入退出的群的uid：");
+			printf("[不要输入不是你所加群的uid,和自己的创建的群] 请输入退出的群的uid：");
 			scanf("%d", &groupid);
 			getchar();
-
+			system("clear");
 			List_ForEach(headgroup, pos1)
 			{
-				if (pos1->data.recv_fd == groupid)
+				if (pos1->data.recv_fd == groupid && pos1->data.send_fd != 1)
 				{
 					if (UI_groupout(groupid, conn_fd))
 					{
@@ -667,12 +680,13 @@ void watchgrouplist(int conn_fd)
 
 			break;
 		case 8:
-			printf("请选择你要踢人的群聊：");
+			printf("[不要输入你没有权限] 请选择你要踢人的群聊：");
 			scanf("%d", &groupid);
 			getchar();
+			system("clear");
 			List_ForEach(headgroup, pos1)
 			{
-				if (pos1->data.recv_fd == groupid && pos1->data.recv_fd == useruid)
+				if (pos1->data.recv_fd == groupid && pos1->data.send_fd == 1)
 				{
 					if (UI_groupmbkick(groupid, conn_fd))
 					{
@@ -685,7 +699,7 @@ void watchgrouplist(int conn_fd)
 			break;
 
 		case 9:
-			printf("请输入你想要查看的群uid：");
+			printf("[不要输入不是你所加群的uid] 请输入你想要查看的群uid：");
 			scanf("%d", &grochatfd);
 			getchar();
 			List_ForEach(headgroup, pos1)
@@ -709,15 +723,15 @@ void watchgrouplist(int conn_fd)
 			grosee = -1;
 			if (send(conn_fd, senddata, sizeof(PACK), 0) > 0)
 			{
-				
+
 				printf("-----------------------加载中-----------------------\n");
-				while (grosee != 1){
-					pthread_cond_wait(&cond,&mutex);
+				while (grosee != 1)
+				{
+					pthread_cond_wait(&cond, &mutex);
 				}
 				system("clear");
 				paging.totalRecords = groupnum;
 				List_Paging(headgroup, paging, box_node_t);
-
 			}
 			break;
 		case 1:
@@ -736,7 +750,8 @@ void watchgrouplist(int conn_fd)
 			break;
 		}
 	} while (choice != 11);
-	grosee = 0;
+	grosee = -1;
+	free(senddata);
 }
 
 int login(int conn_fd)
@@ -745,6 +760,7 @@ int login(int conn_fd)
 	int flag;
 	do
 	{ //输入用户信息直到正确为止
+
 
 		PACK *senddata = NULL;
 		senddata = (PACK *)malloc(sizeof(PACK));
@@ -776,7 +792,7 @@ int login(int conn_fd)
 					exit(1);
 				}
 			}
-			printf("recv %zd bytes\n", n);
+
 			len_pack -= n;
 			p += n;
 		}
@@ -804,7 +820,10 @@ int login(int conn_fd)
 				}
 			}
 		}
-	} while (flag != 1);
+		free(recvdata);
+		free(senddata);
+	} while (1);
+	
 }
 
 void UI_loginin(int conn_fd)
@@ -903,12 +922,13 @@ int UI_zhuce(int conn_fd)
 			{
 				flag = 1;
 				//recive(conn_fd,recvdata);
-				printf("注册成功\n");
-				return 1;
+				printf("注册成功,输回车返回登录\n");
+				getchar();
+				return 0;
 			}
 			else
 			{
-				printf("你的用户名以使用过，请重新输入，或者选择退出，退出请输【10086】，继续请输【0】\n");
+				printf("你的用户名以使用过，请重新输入，或者选择退出，退出请输【10086】，继续请输【0】");
 				scanf("%d", &flag);
 				getchar();
 				if (flag == 10086)
@@ -918,7 +938,9 @@ int UI_zhuce(int conn_fd)
 				}
 			}
 		}
-	} while (flag);
+		free(senddata);
+		free(recvdata);
+	} while (1);
 }
 
 void UI_user(int conn_fd)
@@ -1000,6 +1022,7 @@ void changepassword(int conn_fd)
 			strcpy(senddata->data.mes, password3);
 			strcpy(senddata->data.send_name, username);
 			input_userinfo(conn_fd, senddata); //发
+			free(senddata);
 			break;
 		}
 		else
@@ -1058,17 +1081,48 @@ void findpassword(int conn_fd)
 	{
 		printf("答案正确！！！！请输入新密码：");
 		scanf("%s", daan);
-
+		getchar();
 		senddata->type = CHANGE_NUM;
 		strcpy(senddata->data.mes, daan);
 		senddata->data.send_fd = conn_fd;
 		strcpy(senddata->data.send_name, zhanghu);
 		input_userinfo(conn_fd, senddata); //发
+
+		PACK *recvdata = NULL;
+		recvdata = (PACK *)malloc(sizeof(PACK));
+
+		int len_pack = LEN_PACK;
+		char *p = (char *)(recvdata);
+		while (len_pack > 0)
+		{
+			size_t n;
+			if ((n = recv(conn_fd, p, len_pack, 0)) < 0)
+			{
+				if (errno != EAGAIN)
+				{
+					perror("recv");
+					exit(1);
+				}
+			}
+			len_pack -= n;
+			p += n;
+		}
+		if (recvdata->type == CHANGE_NUM)
+		{
+			if (recvdata->data.mes[0] == 'y')
+			{
+				printf("重置密码成功，按下回车键退出，请用新密码登录\n");
+				getchar();
+			}
+		}
 	}
 	else
 	{
-		printf("密保问题错误，重置失败！\n");
+		printf("密保问题错误，重置失败！,输入回车退出\n");
+		getchar();
 	}
+	free(senddata);
+	free(recvdata);
 }
 
 int UI_friendadd(int conn_fd)
@@ -1087,6 +1141,7 @@ int UI_friendadd(int conn_fd)
 	strcpy(senddata->data.mes, friendname);
 	input_userinfo(conn_fd, senddata); //发
 	printf("发送成功\n");
+	free(senddata);
 }
 
 int UI_frienddel(int delfd, int conn_fd)
@@ -1099,6 +1154,7 @@ int UI_frienddel(int delfd, int conn_fd)
 	strcpy(senddata->data.send_name, username);
 	sprintf(senddata->data.mes, "%d", useruid);
 	input_userinfo(conn_fd, senddata); //发
+	free(senddata);
 }
 int UI_groupadd(int conn_fd, int groupid)
 {
@@ -1111,6 +1167,7 @@ int UI_groupadd(int conn_fd, int groupid)
 	sprintf(senddata->data.mes, "%d", groupid);
 
 	input_userinfo(conn_fd, senddata); //发
+	free(senddata);
 }
 
 int UI_groupcreate(int conn_fd)
@@ -1130,26 +1187,25 @@ int UI_groupcreate(int conn_fd)
 	strcpy(senddata->data.send_name, username);
 	strcpy(senddata->data.mes, groupname);
 	input_userinfo(conn_fd, senddata); //发
+	free(senddata);
 }
 
 int UI_groupmbkick(int groupid, int conn_fd)
 {
 
-	while (1)
-	{
-		int friendname;
-		printf("请输入你要清除的人uid号：");
-		scanf("%d", &friendname);
-		getchar();
+	int friendname;
+	printf("请输入你要清除的人uid号：");
+	scanf("%d", &friendname);
+	getchar();
 
-		PACK *senddata = NULL;
-		senddata = (PACK *)malloc(sizeof(PACK));
+	PACK *senddata = NULL;
+	senddata = (PACK *)malloc(sizeof(PACK));
 
-		senddata->type = GROUP_KICK;
-		senddata->data.send_fd = groupid;
-		sprintf(senddata->data.send_name, "%s", friendname);
-		input_userinfo(conn_fd, senddata); //发
-	}
+	senddata->type = GROUP_KICK;
+	senddata->data.send_fd = groupid;
+	sprintf(senddata->data.send_name, "%d", friendname);
+	input_userinfo(conn_fd, senddata); //发
+	free(senddata);
 }
 
 int UI_groupout(int groupid, int conn_fd)
@@ -1160,9 +1216,11 @@ int UI_groupout(int groupid, int conn_fd)
 
 	senddata->type = GROUP_QIUT;
 	senddata->data.send_fd = groupid;
-	sprintf(senddata->data.send_name, "%s", useruid);
-
+	sprintf(senddata->data.send_name, "%d", useruid);
+	printf("%s", useruid);
+	getchar();
 	input_userinfo(conn_fd, senddata); //发
+	free(senddata);
 }
 
 int UI_groupdel(int groupid, int conn_fd)
@@ -1174,6 +1232,7 @@ int UI_groupdel(int groupid, int conn_fd)
 	senddata->data.send_fd = groupid;
 	sprintf(senddata->data.send_name, "%d", useruid);
 	input_userinfo(conn_fd, senddata); //发
+	free(senddata);
 }
 
 int UI_friendchat(int chatfd, int conn_fd)
@@ -1188,8 +1247,9 @@ int UI_friendchat(int chatfd, int conn_fd)
 		PACK *senddata = NULL;
 		senddata = (PACK *)malloc(sizeof(PACK));
 
-		printf("you[|]quit>>\n");
-		scanf("%s", &frimessage);
+		printf("you[|键退出]<<\n");
+		gets(frimessage);
+		//scanf("%s", frimessage);
 
 		senddata->data.send_fd = chatfd;
 		sprintf(senddata->data.send_name, "%d", useruid);
@@ -1197,6 +1257,7 @@ int UI_friendchat(int chatfd, int conn_fd)
 		senddata->type = FRI_MES;
 		strcpy(senddata->data.mes, frimessage);
 		input_userinfo(conn_fd, senddata); //发
+		free(senddata);
 
 	} while (frimessage[0] != '|');
 	chatfd = -1;
@@ -1215,8 +1276,10 @@ int UI_groupchat(int grochatfd, int conn_fd)
 		senddata = (PACK *)malloc(sizeof(PACK));
 		strcpy(senddata->data.send_name, gromessage);
 
-		printf("you[|]quit>>");
-		scanf("%s", gromessage);
+		printf("you[|键退出]<<\n");
+		gets(gromessage);
+		//sizeof(gromessage)
+		//scanf("%s", gromessage);
 
 		senddata->type = GRO_MES;
 		senddata->data.send_fd = grochatfd;
@@ -1225,6 +1288,7 @@ int UI_groupchat(int grochatfd, int conn_fd)
 		sprintf(senddata->data.send_name, "%d", useruid);
 		strcpy(senddata->data.mes, gromessage);
 		input_userinfo(conn_fd, senddata); //发
+		free(senddata);
 
 	} while (gromessage[0] != '|');
 	grochatfd = -1;
@@ -1232,7 +1296,7 @@ int UI_groupchat(int grochatfd, int conn_fd)
 
 void watchlistbox(int conn_fd)
 {
-
+	system("clear");
 	int i, id;
 	int choice;
 
@@ -1285,21 +1349,25 @@ void watchlistbox(int conn_fd)
 					if (pos->data.type == FRIQUE)
 					{
 						List_DelNode(pos);
+						messnum--;
 						judgeaddfri(mes, conn_fd);
 					}
 					else if (pos->data.type == GROQUE)
 					{
 						List_DelNode(pos);
+						messnum--;
 						judgeaddgro(mes, conn_fd);
 					}
 					else if (pos->data.type == FRI_MES)
 					{
 						List_DelNode(pos);
+						messnum--;
 						printf("请去查看好友哪里去回复此人\n");
 					}
 					else if (pos->data.type == GRO_MES)
 					{
 						List_DelNode(pos);
+						messnum--;
 						printf("请去查看群聊的哪里回复该群\n");
 					}
 				}
@@ -1309,12 +1377,14 @@ void watchlistbox(int conn_fd)
 			List_Paging(head, paging, box_node_t);
 			break;
 		case 1:
+			system("clear");
 			if (!Pageing_IsFirstPage(paging))
 			{
 				Paging_Locate_OffsetPage(head, paging, -1, box_node_t);
 			}
 			break;
 		case 2:
+			system("clear");
 			if (!Pageing_IsLastPage(paging))
 			{
 				Paging_Locate_OffsetPage(head, paging, 1, box_node_t);
@@ -1335,10 +1405,11 @@ int UI_frimessbox(int chatfd, int conn_fd)
 	sprintf(senddata->data.send_name, "%d", useruid);
 
 	ssize_t n = send(conn_fd, senddata, sizeof(PACK), 0);
-	printf("send %zd bytes\n", n);
+	//printf("send %zd bytes\n", n);
 	printf("-----------------------加载中------------------------\n");
 	printf("输入回车退出\n");
 	getchar();
+	free(senddata);
 }
 
 int UI_gromessbox(int grochatfd, int conn_fd)
@@ -1349,10 +1420,11 @@ int UI_gromessbox(int grochatfd, int conn_fd)
 	senddata->type = CHAT_MANY;
 	senddata->data.send_fd = grochatfd;
 	ssize_t n = send(conn_fd, senddata, sizeof(PACK), 0);
-	printf("send %zd bytes\n", n);
+	//printf("send %zd bytes\n", n);
 	printf("-----------------------加载中-----------------------\n");
 	printf("输入回车退出\n");
 	getchar();
+	free(senddata);
 }
 
 void judgeaddfri(int mes, int conn_fd)
@@ -1367,6 +1439,7 @@ void judgeaddfri(int mes, int conn_fd)
 	senddata->data.send_fd = mes;
 	strcpy(senddata->data.send_name, username);
 	input_userinfo(conn_fd, senddata); //发
+	free(senddata);
 }
 void judgeaddgro(int mes, int conn_fd)
 {
@@ -1380,6 +1453,7 @@ void judgeaddgro(int mes, int conn_fd)
 	senddata->data.send_fd = mes;
 	strcpy(senddata->data.send_name, username);
 	input_userinfo(conn_fd, senddata); //发
+	free(senddata);
 }
 
 int UI_filesend(int conn_fd)
@@ -1389,7 +1463,7 @@ int UI_filesend(int conn_fd)
 	senddata = (PACK *)malloc(sizeof(PACK));
 	int sum = 0, re, fd;
 
-	printf("请输入对方的账号:");
+	printf("请输入对方的uid:");
 	scanf("%d", &senddata->data.send_fd);
 	printf("请输入本目录下的文件名:");
 	scanf("%s", senddata->data.send_name);
@@ -1413,7 +1487,9 @@ int UI_filesend(int conn_fd)
 		if (sum < 0)
 			break;
 	}
-	printf("客户端发送成功！");
+	close(fd);
+	free(senddata);
+	printf("客户端发送成功！\n");
 }
 
 void printtype(int type)
