@@ -1,10 +1,10 @@
 /*
 * Copyright(C), 2007-2008, XUPT Univ.	 
 * File name: list.h			 
-* Description : Á´±í²Ù×÷ºê¶¨Òå¡¢·ÖÒ³²Ù×÷ 
+* Description : ÿÿÿÿÿÿÿÿÿ?ÿ?ÿÿ?ÿÿÿÿ 
 * Author:   XUPT  		 
 * Version:  v.1 	 
-* Date: 	2015Äê4ÔÂ22ÈÕ		 
+* Date: 	2015ÿÿ4ÿÿ22ÿÿ		 
 */
 
 #ifndef LIST_H_
@@ -13,13 +13,13 @@
 #include <stdlib.h>
 #include <assert.h>
 
-/*³õÊ¼»¯Á´±ílist¡£Á´±íÎª´øÍ·½áµãµÄË«ÏòÑ­»·Á´±í*/
+/*ÿÿ?ÿÿÿÿÿÿlistÿÿÿÿÿÿÚÿÿ?ÿÿÿÿ?ÿÿ?ÿÿÿÿÿÿ*/
 #define List_Init(list, list_node_t) {					\
 		list=(list_node_t*)malloc(sizeof(list_node_t)); \
 		(list)->next=(list)->prev=list;					\
 	}
 
-//ÊÍ·ÅÁ´±ílistÖĞËùÓĞÊı¾İ½áµã¡£list ÎªÁ´±íÍ·Ö¸Õë£¬list_node_tÎªÁ´±í½áµãÀàĞÍ
+//ÿ?ÿÿÿÿÿlistÿÿÿÿÿÿÿÿÿ?ÿ?list Úÿÿÿÿ??ÿ?list_node_tÚÿÿÿÿÿÿÿÿÿÿÿ
 #define List_Free(list, list_node_t) {			\
 		assert(NULL!=list);						\
 		list_node_t *tmpPtr;					\
@@ -31,7 +31,7 @@
 		(list)->next=(list)->prev=list;			\
 	}
 
-//Ïú»ÙÁ´±ílist£¬ÊÍ·ÅËùÓĞÊı¾İ½áµã¼°Í·½áµã¡£ listÎªÁ´±íÍ·Ö¸Õë£¬tmpPtrÎªÁ´±í½áµãÁÙÊ±Ö¸Õë±äÁ¿
+//ÿÿÿÿÿÿÿÿlistÿÿÿ?ÿÿÿÿÿÿÿÿ?ÿ??ÿÿ? listÚÿÿÿÿ??ÿ?tmpPtrÚÿÿÿÿÿÿÿÿÿ??ÿÿÿÿÿ
 #define List_Destroy(list, list_node_t) {		\
 		assert(NULL!=list);						\
 		List_Free(list, list_node_t)			\
@@ -39,7 +39,7 @@
 		(list)=NULL;							\
 	}
 
-//Á´±íÍ·²å·¨£¬listÎªÍ·Ö¸Õë£¬newÎªĞÂ½Úµã
+//ÿÿÿÿ?ÿ?ÿÿlistÚ??ÿ?newÚÿ½?ÿ
 #define List_AddHead(list, newNode) {			\
 		(newNode)->next=(list)->next;		 	\
 		(list)->next->prev=newNode;			 	\
@@ -47,7 +47,7 @@
 		(list)->next=newNode;				 	\
 	}
 
-//Á´±íÎ²²å·¨£¬listÎªÍ·Ö¸Õë£¬newÎªĞÂ½Úµã
+//ÿÿÿÿâÿ?ÿÿlistÚ??ÿ?newÚÿ½?ÿ
 #define List_AddTail(list, newNode) {			\
 		(newNode)->prev=(list)->prev; 		 	\
 		(list)->prev->next=newNode;			 	\
@@ -55,7 +55,7 @@
 		(list)->prev=newNode;				 	\
 	}
 
-//½«ĞÂ½ÚµãnewNode¼ÓÈëµ½nodeÖ®Ç°
+//ÿÿÿ½?ÿnewNodeÿÿÿ?node??
 #define List_InsertBefore(node, newNode) {		\
 		(newNode)->prev=(node)->prev; 		 	\
 		(newNode)->next=node;			 		\
@@ -63,7 +63,7 @@
 		(newNode)->next->prev=newNode;			\
 	}
 
-//½«ĞÂ½ÚµãnewNode¼ÓÈëµ½nodeÖ®ºó
+//ÿÿÿ½?ÿnewNodeÿÿÿ?node?ÿÿ
 #define List_InsertAfter(node, newNode) {		\
 		(newNode)->next=node->next;			 	\
 		(newNode)->prev=node; 				 	\
@@ -71,26 +71,26 @@
 		(newNode)->prev->next=newNode;			\
 	}
 
-//ÅĞ¶ÏÁ´±íÊÇ·ñÎª¿Õ£¬listÎªÍ·Ö¸Õë
+//ÿ?ÿÿÿÿÿÿ?ÿÚÿ?ÿlistÚ??ÿÿ
 #define List_IsEmpty(list)  ((list != NULL)	\
 	&& ((list)->next == list)				\
 	&& (list == (list)->prev))
 
-//´ÓÉ¾³ıÁ´±í½áµãnode£¬
+//ÿÿ?ÿÿÿÿÿÿÿÿÿnodeÿÿ
 #define List_DelNode(node) {\
 			assert(NULL!=node && node!=(node)->next && node!=(node)->prev);				\
 			(node)->prev->next=(node)->next; 	\
 			(node)->next->prev=(node)->prev;	\
 	}
 
-//´ÓÁ´±íÖĞÉ¾³ı²¢ÊÍ·Å½áµãnode
+//ÿÿÿÿÿÿÿÿ?ÿÿÿÿÿ??ÿÿnode
 #define List_FreeNode(node) {	\
 		List_DelNode(node);		\
 		free(node);				\
 	}
 
 
-//Ê¹ÓÃÖ¸ÕëcurPosÒÀ´Î±éÀúÁ´±ílist
+//?ÿÿ?ÿÿcurPosÿÿÿáÿÿÿÿÿÿÿlist
 #define List_ForEach(list, curPos) 		\
 	 for (   curPos = (list)->next;  	\
 		  	  	  curPos != list;       \
@@ -98,16 +98,16 @@
 	    )
 
 
-//·ÖÒ³Êı¾İ½á¹¹Ìå£¬¼ò³Æ·ÖÒ³Æ÷ÀàĞÍ
+//ÿÿ?ÿÿÿ??ÿ?ÿÿ?ÿ?ÿÿÿÿÿÿ
 typedef struct
 {
-	int totalRecords;	//×Ü¼ÇÂ¼Êı
-	int offset;			//µ±Ç°Ò³ÆğÊ¼¼ÇÂ¼Ïà¶ÔÓÚµÚÒ»Ìõ¼ÇÂ¼µÄÆ«ÒÆ¼ÇÂ¼Êı
-	int pageSize;		//Ò³Ãæ´óĞ¡
-	void *curPos;		//µ±Ç°Ò³ÆğÊ¼¼ÇÂ¼ÔÚÁ´±íÖĞµÄ½áµãµØÖ·
+	int totalRecords;	//ÿ?ÿ?ÿÿ
+	int offset;			//ÿÿ??ÿÿ?ÿÿ?ÿÿÿÿ?ÿ?ÿÿÿÿ?ÿÿ?ÿ?ÿ?ÿÿ
+	int pageSize;		//?ÿÿÿ?
+	void *curPos;		//ÿÿ??ÿÿ?ÿÿ?ÿÿÿÿÿÿÿ??ÿÿÿ?
 }Pagination_t;
 
-//¸ù¾İ·ÖÒ³Æ÷pagingµÄÆ«ÒÆÁ¿offset½«·ÖÒ³Æ÷¶¨Î»µ½Á´±ílistµÄ¶ÔÓ¦Î»ÖÃ
+//ÿÿÿ?ÿ?ÿÿpagingÿÿ?ÿÿÿÿoffsetÿÿÿÿ?ÿÿÿÿëÿÿÿÿÿÿlistÿ?ÿ?ëÿÿ
 #define List_Paging(list, paging, list_node_t) {			\
 		if(paging.offset+paging.pageSize>=paging.totalRecords){	\
 			Paging_Locate_LastPage(list, paging, list_node_t);	}\
@@ -120,13 +120,13 @@ typedef struct
 		}														\
 	}
 
-//½«·ÖÒ³Æ÷paging¶¨Î»µ½Á´±ílistµÄµÚÒ»Ò³
+//ÿÿÿÿ?ÿÿpagingÿÿëÿÿÿÿÿÿlistÿ?ÿ??
 #define Paging_Locate_FirstPage(list, paging) { \
 		paging.offset=0;						\
 		paging.curPos=(void *)((list)->next);	\
 	}
 
-//½«·ÖÒ³Æ÷paging¶¨Î»µ½Á´±ílistµÄ×îºóÒ»Ò³
+//ÿÿÿÿ?ÿÿpagingÿÿëÿÿÿÿÿÿlistÿÿÿÿÿ??
 #define Paging_Locate_LastPage(list, paging, list_node_t) {	\
 	int i=paging.totalRecords % paging.pageSize;	\
 	if (0==i && paging.totalRecords>0)				\
@@ -139,16 +139,16 @@ typedef struct
 													\
 }
 
-//¶ÔÓÚÁ´±ílist¼°·ÖÒ³Æ÷paging,Ê¹ÓÃÖ¸ÕëcurPosÒÀ´Î±éÀúpagingÖ¸ÏòÒ³ÃæÖĞÃ¿¸ö½áµã
-//ÕâÀïiÎªÕûĞÍ¼ÆÊıÆ÷±äÁ¿
+//ÿÿÿÿÿÿÿÿlistÿÿÿÿ?ÿÿpaging,?ÿÿ?ÿÿcurPosÿÿÿáÿÿÿpaging?ÿÿ?ÿÿÿÿ?ÿÿÿÿÿ
+//ÿÿÿÿiÚÿÿÿ?ÿÿÿÿÿÿÿÿÿ
 #define Paging_ViewPage_ForEach(list, paging, list_node_t, pos, i) 	\
 	for (i=0, pos = (list_node_t *) (paging.curPos);	\
 			pos != list && i < paging.pageSize; 		\
 			i++, pos=pos->next)							\
 
-//¶ÔÓÚÁ´±ílist,½«·ÖÒ³Æ÷pagingÏòÇ°£¨ºó£©ÒÆ¶¯offsetPage¸öÒ³Ãæ.
-//µ±offsetPage<0Ê±£¬ÏòÇ°£¨Á´±íÍ··½Ïò£©ÒÆ¶¯|offsetPage|¸öÒ³Ãæ
-//µ±offsetPage>0Ê±£¬Ïòºó£¨Á´Ä©Î²·½Ïò£©ÒÆ¶¯offsetPage¸öÒ³Ãæ
+//ÿÿÿÿÿÿÿÿlist,ÿÿÿÿ?ÿÿpagingÿÿ?ÿÿÿÿÿ?ÿoffsetPageÿÿ?ÿÿ.
+//ÿÿoffsetPage<0?ÿÿÿÿ?ÿÿÿÿÿÿ?ÿÿÿÿÿ?ÿ|offsetPage|ÿÿ?ÿÿ
+//ÿÿoffsetPage>0?ÿÿÿÿÿÿÿ?âÿÿÿÿÿ?ÿoffsetPageÿÿ?ÿÿ
 #define Paging_Locate_OffsetPage(list, paging, offsetPage, list_node_t) {\
 	int offset=offsetPage*paging.pageSize;			\
 	list_node_t *pos=(list_node_t *)paging.curPos;	\
@@ -174,18 +174,18 @@ typedef struct
 	}														\
 }
 
-//¸ù¾İ·ÖÒ³Æ÷paging¼ÆËãµ±Ç°µÄÒ³ºÅ
+//ÿÿÿ?ÿ?ÿÿpagingÿÿÿ??ÿÿ?ÿÿ
 #define Pageing_CurPage(paging) 	(0==(paging).totalRecords?0:1+(paging).offset/(paging).pageSize)
 
-//¸ù¾İ·ÖÒ³Æ÷paging¼ÆËãµÄ×ÜµÄÒ³Êı
+//ÿÿÿ?ÿ?ÿÿpagingÿÿÿÿÿÿ?ÿ?ÿÿ
 #define Pageing_TotalPages(paging)	(((paging).totalRecords%(paging).pageSize==0)?\
 	(paging).totalRecords/(paging).pageSize:\
 	(paging).totalRecords/(paging).pageSize+1)
 
-//¸ù¾İpagingÅĞ¶Ïµ±Ç°Ò³ÃæÊÇ·ñÎªµÚÒ»Ò³¡£½á¹ûÎªtrue±íÊ¾ÊÇ£¬·ñÔòfalse
+//ÿÿÿÿpagingÿ??ÿ??ÿÿÿ?ÿÚÿÿ??ÿÿÿÿÿÚtrueÿÿ?ÿ?ÿÿÿÿÿfalse
 #define Pageing_IsFirstPage(paging) (Pageing_CurPage(paging)<=1)
 
-//¸ù¾İpagingÅĞ¶Ïµ±Ç°Ò³ÃæÊÇ·ñÎª×îºóÒ»Ò³¡£½á¹ûÎªtrue±íÊ¾ÊÇ£¬·ñÔòfalse
+//ÿÿÿÿpagingÿ??ÿ??ÿÿÿ?ÿÚÿÿÿ??ÿÿÿÿÿÚtrueÿÿ?ÿ?ÿÿÿÿÿfalse
 #define Pageing_IsLastPage(paging) 	(Pageing_CurPage(paging)>=Pageing_TotalPages(paging))
 
 

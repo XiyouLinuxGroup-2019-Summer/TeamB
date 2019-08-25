@@ -154,7 +154,7 @@ int main(int argc, char **argv)
 void input_userinfo(int conn_fd, const PACK *senddata)
 {
 
-	//printf("%d", sizeof(PACK)) ;
+	
 	if (send(conn_fd, senddata, sizeof(PACK), 0) < 0)
 		my_err("send", __LINE__);
 }
@@ -199,7 +199,7 @@ void *clientrecive(void *conn_fd)
 			newmessage->data.send_fd = recvdata->data.send_fd;
 			List_AddHead(headuser, newmessage);
 			friendnum++;
-			free(newmessage);
+			
 		}
 
 		if (recvdata->type == GROUP_SEE)
@@ -214,7 +214,7 @@ void *clientrecive(void *conn_fd)
 			newmessage->data.recv_fd = recvdata->data.recv_fd;
 			newmessage->data.send_fd = recvdata->data.send_fd;
 			List_AddHead(headgroup, newmessage);
-			free(newmessage);
+			
 		}
 
 		if (recvdata->type == GROSEEEND)
@@ -245,7 +245,7 @@ void *clientrecive(void *conn_fd)
 			if (atoi(recvdata->data.recv_name) == grochatfd)
 			{
 
-				//printf("recv_name = %d, grochatfd = %d recvdata sendfd = %d\n",atoi(recvdata->data.recv_name),grochatfd,recvdata->data.send_fd);
+				
 				printf("[%d]>>%s\n", recvdata->data.send_fd, recvdata->data.mes);
 				printf("you[|]quit>>\n");
 			}
@@ -262,7 +262,7 @@ void *clientrecive(void *conn_fd)
 				newmessage->data.send_fd = recvdata->data.send_fd;
 				List_AddHead(head, newmessage);
 				messnum++;
-				free(newmessage);
+				
 			}
 		}
 
@@ -287,7 +287,7 @@ void *clientrecive(void *conn_fd)
 				newmessage->data.send_fd = recvdata->data.send_fd;
 				List_AddHead(head, newmessage);
 				messnum++;
-				free(newmessage);
+				
 			}
 		}
 
@@ -316,7 +316,7 @@ void *clientrecive(void *conn_fd)
 			newmessage->data.send_fd = recvdata->data.send_fd;
 			List_AddHead(head, newmessage);
 			messnum++;
-			free(newmessage);
+			
 		}
 
 		if (recvdata->type == FRI_DEL)
