@@ -13,7 +13,7 @@
 
 infouser_list_t head;
 infouser_node_t * pos;
-void *myallthread(PACK *pack);
+void myallthread(PACK *pack);
 int threadlogin(PACK *pack);
 void userregister(PACK *pack);
 void mysqlinit(MYSQL *mysql);
