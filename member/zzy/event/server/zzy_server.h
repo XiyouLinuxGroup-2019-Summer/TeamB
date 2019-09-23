@@ -1,6 +1,18 @@
 #ifndef _SERVER_H_
 #define _SERVER_H_
 
+
+#include<stdio.h>
+#include<stdlib.h>
+#include<sys/types.h>
+#include<sys/socket.h>
+#include<unistd.h>
+#include<string.h>
+#include<netinet/in.h>
+#include<arpa/inet.h>
+#include<error.h>
+#include<sys/epoll.h>
+#include<pthread.h>
 #include<mysql/mysql.h>
 
 #define INVALID_USERINFO    'n'     //用户信息无效
@@ -35,6 +47,23 @@ struct userinfo {   //保存用户名和密码的结构体
 #define DOWLOAD 2   //下线
   
 #define MAX_SIZE    400
+#define MAX_USER    100
+#define MAX_GROUP   10
+
+
+//用户信息
+typedef struct user_inforn{    
+    char username[MAX_SIZE];      //用户名
+    unsigned int password[10];    //加密后的密码 
+    int statue;                   //用户状态
+    int socket_id;
+    int friend_num;               //好友数量
+    int group_num;                //群组数量
+    char group[MAX_GROUP][MAX_SIZE];
+    char friends[MAX_USER][MAX_SIZE];
+
+}USER_INFORN; 
+
 
 //定义发送接收的包
 typedef struct package{
@@ -48,6 +77,11 @@ typedef struct package{
 pthread_mutex_t mutex;  //锁
 int user_sum = 0;       //用户数
 int listenfd;           //监听套接字
+pack    pack_send[MAX_SIZE*2];
+int     pack_send_num = 0;
+
+
+
 
 //登录函数
 int login_server(pack *recv_pack);
@@ -67,5 +101,7 @@ void epoll_del(int epfd,int fd);
 int passward(int id,char message[]);
 //注册函数
 int registering_server(pack *recv_pack);
+//上线发包
+void downline_send_server(void);
 #endif
 
