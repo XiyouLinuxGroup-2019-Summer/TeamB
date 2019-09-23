@@ -616,7 +616,7 @@ void watchgrouplist(int conn_fd)
 			List_ForEach(headgroup, pos1)
 			{
 
-				if (pos1->data.recv_fd == groupid && pos1->data.send_fd == useruid)
+				if (pos1->data.recv_fd == groupid && pos1->data.send_fd == 1)
 				{
 
 					if (UI_groupdel(groupid, conn_fd))
